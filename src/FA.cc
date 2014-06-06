@@ -4,6 +4,7 @@
 #include <vector>
 #include "FA.hh"
 
+#include <iostream>
 
 namespace lexer {
 
@@ -12,7 +13,7 @@ namespace lexer {
 
   FA::FA(size_t numberOfStates, std::vector<state> &acceptStates,
 	 state initialState, std::map<std::pair<state, symbol>, state> &delta) :
-    numberOfStates(numberOfStates), A(acceptStates), q0(q0), delta(delta) {}
+    numberOfStates(numberOfStates), A(acceptStates), q0(initialState), delta(delta) {}
 
   bool FA::accept(std::string &s) {
     state currentState = q0;

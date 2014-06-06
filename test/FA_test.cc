@@ -12,6 +12,9 @@ void printResult(bool success) {
 
 void test1() {
   
+  // Creates an automaton that accepts all binary strings that end with at least
+  // two '0' characters.
+
   std::map<std::pair<lexer::state, lexer::symbol>, lexer::state> d;
   d.insert(std::make_pair(std::make_pair(0, '0'), 1));
   d.insert(std::make_pair(std::make_pair(0, '1'), 0));
