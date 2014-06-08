@@ -4,6 +4,7 @@
 #include <map>
 #include <stdint.h>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 
@@ -21,18 +22,35 @@ public:
   DFA(size_t numberOfStates, std::vector<state> &acceptStates,
      state initialState, std::map<std::pair<state, symbol>, state> &delta);
 
-  bool accept(std::string &s);
+  bool accept(std::string &s) const;
 
-  std::vector<state>& getAcceptStates();
+  static DFA join(DFA const &a, DFA const &b);
+
+  static DFA intersection(const DFA &a, const DFA &b);
+
+  static DFA minus(const DFA &a, const DFA &b);
+
+  const std::vector<state>& getAcceptStates() const;
+
+  const std::map<std::pair<state, symbol>, state>&
+  getDelta() const;
 
   state getInitialState();
 
+  size_t getNumberOfStates() const;
+
+  std::unordered_set<symbol> getAlphabet() const;
+
+  std::string toDot() const;
+
 private:
-  // alphabet is implicit
+
   size_t numberOfStates;
+
   std::vector<state> A; // Accept States. Invariant: A is always sorted.
   state q0; // initial state
   std::map<std::pair<state, symbol>, state> delta; // transition function
+  
 
 
 };
