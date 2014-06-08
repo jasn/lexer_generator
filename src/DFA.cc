@@ -2,20 +2,20 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "FA.hh"
+#include "DFA.hh"
 
 #include <iostream>
 
 namespace lexer {
 
-  FA::FA() : numberOfStates(0), A(std::vector<state>()), 
+  DFA::DFA() : numberOfStates(0), A(std::vector<state>()), 
 	     q0(0), delta(std::map<std::pair<state, symbol>, state>()) {  }
 
-  FA::FA(size_t numberOfStates, std::vector<state> &acceptStates,
+  DFA::DFA(size_t numberOfStates, std::vector<state> &acceptStates,
 	 state initialState, std::map<std::pair<state, symbol>, state> &delta) :
     numberOfStates(numberOfStates), A(acceptStates), q0(initialState), delta(delta) {}
 
-  bool FA::accept(std::string &s) {
+  bool DFA::accept(std::string &s) {
     state currentState = q0;
 
     for (auto c : s) {
@@ -30,14 +30,14 @@ namespace lexer {
     return std::binary_search(std::begin(A), std::end(A), currentState);
   }
   
-  std::vector<state>& FA::getAcceptStates() {
+  std::vector<state>& DFA::getAcceptStates() {
     return A;
   }
 
-  state FA::getInitialState() {
+  state DFA::getInitialState() {
     return q0;
   }
-  // FA concat(FA &lhs, FA &rhs) {
+  // DFA concat(DFA &lhs, DFA &rhs) {
 
   //   size_t lhsSize lhs.numberOfStates;
   //   size_t rhsSize rhs.numberOfStates;

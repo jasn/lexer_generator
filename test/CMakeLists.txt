@@ -1,4 +1,4 @@
-add_executable(FA_test FA_test.cc)
+add_executable(DFA_test DFA_test.cc)
 
-target_link_libraries(FA_test lexer)
+target_link_libraries(DFA_test lexer)
 

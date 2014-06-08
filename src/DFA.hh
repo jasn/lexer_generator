@@ -1,5 +1,5 @@
-#ifndef FA_HH_GUARD
-#define FA_HH_GUARD
+#ifndef DFA_HH_GUARD
+#define DFA_HH_GUARD
 
 #include <map>
 #include <stdint.h>
@@ -13,12 +13,12 @@ namespace lexer {
   typedef uint32_t state;
   typedef uint8_t symbol;
 
-class FA {
+class DFA {
 public:
 
-  FA();
+  DFA();
 
-  FA(size_t numberOfStates, std::vector<state> &acceptStates,
+  DFA(size_t numberOfStates, std::vector<state> &acceptStates,
      state initialState, std::map<std::pair<state, symbol>, state> &delta);
 
   bool accept(std::string &s);

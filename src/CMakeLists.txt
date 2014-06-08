@@ -1,5 +1,5 @@
 add_library (lexer
-	    FA.hh
-	    FA.cc
+	    DFA.hh
+	    DFA.cc
 )
 

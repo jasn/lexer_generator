@@ -2,7 +2,7 @@
 #include <map>
 #include <vector>
 
-#include "../src/FA.hh"
+#include "../src/DFA.hh"
 
 size_t counter = 1;
 
@@ -24,7 +24,7 @@ void test1() {
   d.insert(std::make_pair(std::make_pair(2, '1'), 0));
   std::vector<lexer::state> acc = {2};
 
-  lexer::FA automaton(3, acc, 0, d);
+  lexer::DFA automaton(3, acc, 0, d);
 
   std::vector<std::string> positiveTestCases = { "01100","00","100","100100" };
   std::vector<std::string> negativeTestCases = { "0110","010","110","1001001" };
