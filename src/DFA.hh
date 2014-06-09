@@ -30,6 +30,8 @@ public:
 
   static DFA minus(const DFA &a, const DFA &b);
 
+  void minimize();
+
   const std::vector<state>& getAcceptStates() const;
 
   const std::map<std::pair<state, symbol>, state>&

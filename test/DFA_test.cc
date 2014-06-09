@@ -10,6 +10,10 @@ void printResult(bool success) {
   std::cout << "Test case #" << counter++ << ":\t" << (success?"Pass":"Fail") << std::endl;
 }
 
+void testMinimize() {
+
+}
+
 void testMinus() {
   std::cout << "No tests for minus yet." << std::endl;
 }
@@ -108,5 +112,7 @@ int main() {
   testIntersection();
 
   testMinus();
+
+  testMinimize();
 
 }
