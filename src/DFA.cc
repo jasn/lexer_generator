@@ -110,30 +110,31 @@ namespace lexer {
   }
 
   void DFA::minimize() {
-    // eliminate unreachable states
 
+    // eliminate unreachable states
     std::unordered_set<state> reachableStates;
     
     std::queue<state> Q;
-    Q.push(0);
-
+    Q.push(q0);
+    reachableStates.insert(q0);
     while (!Q.empty()) {
       state curr = Q.front(); Q.pop();
-
+      
       // iterate through edges
-      auto it = delta.find(std::make_pair(curr, std::numeric_limits<symbol>::min()));
+      auto it = delta.lower_bound(std::make_pair(curr, std::numeric_limits<symbol>::min()));
       while (it->first.first == curr) {
 	if (reachableStates.find(it->second) == std::end(reachableStates)) {
 	  reachableStates.insert(it->second);
 	  Q.push(it->second);
 	}
+	++it;
       }
     }
 
+
+    // Find two initial eq classes: accept and not accept.
     std::vector<std::vector<bool>> eqClasses(this->numberOfStates, std::vector<bool>(this->numberOfStates, false));
 
-
-    
     for (state i = 0; i < eqClasses.size(); ++i) {
       if (reachableStates.find(i) == std::end(reachableStates)) continue;
 
@@ -151,6 +152,9 @@ namespace lexer {
       }
     }
 
+
+    // Iteratively find equivalence classes.
+    // Fixed point computation.
     bool done = false;
     std::unordered_set<symbol> alphabet = this->getAlphabet();
     while (!done) {
@@ -171,21 +175,22 @@ namespace lexer {
 	    state sj = delta.find(std::make_pair(j, s))->second;
 
 	    bool before = eqClasses[i][j];
-	    eqClasses[i][j] = eqClasses[si][sj] || eqClasses[sj][si];
+	    eqClasses[i][j] = eqClasses[si][sj] || eqClasses[sj][si] || eqClasses[i][j];
 	    
 	    if (!before && eqClasses[i][j]) done = false;
-
 	  }
-	  
 	}
       }      
     }
 
+
+    // Compute new states, one for each equivalence class
+    // Create mappings between old and new states.
     uint32_t counter = 1;
     std::unordered_map<state, std::vector<state> > newToOlds;
     std::unordered_map<state, state> oldToNew;
     newToOlds.insert(std::make_pair(0, std::vector<state>(1,0)));
-    oldToNew[0] = 0;
+    oldToNew[q0] = 0;
 
     for (size_t j = 1; j < eqClasses.size(); ++j) {
       bool newState = true;
@@ -204,6 +209,7 @@ namespace lexer {
       }
     }
 
+    // Compute new transition function
     std::map<std::pair<state, symbol>, state> newDelta;
 
     for (auto x : newToOlds) {
@@ -218,16 +224,15 @@ namespace lexer {
       }
     }
 
-    delta = std::move(newDelta);
 
-
+    // Compute new accept states
     std::vector<state> newAccepts;
 
     for (auto x : A) {
       state n = oldToNew[x];
       if (std::find(std::begin(newAccepts), 
 		    std::end(newAccepts),
-		    n) != std::end(newAccepts)) {
+		    n) == std::end(newAccepts)) {
 	
 	newAccepts.push_back(n);
 
@@ -236,8 +241,14 @@ namespace lexer {
     
     std::sort(std::begin(newAccepts), std::end(newAccepts));
 
-    A = std::move(newAccepts);
-    
+    this->A = std::move(newAccepts);
+
+    this->delta = std::move(newDelta);
+
+    this->q0 = 0;
+
+    this->numberOfStates = counter;
+
   }
 
   std::string DFA::toDot() const {
