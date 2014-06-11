@@ -1,5 +1,6 @@
 #include <iostream>
 #include <map>
+#include <unordered_map>
 #include <vector>
 
 #include "../src/DFA.hh"
@@ -10,12 +11,19 @@ void printResult(bool success) {
   std::cout << "Test case #" << counter++ << ":\t" << (success?"Pass":"Fail") << std::endl;
 }
 
+void testMinimize3() {
+  
+  std::cout << "implement tests for several accept types" << std::endl;
+
+}
+
 void testMinimize2() {
     std::map<std::pair<lexer::state, lexer::symbol>, lexer::state> d;
     d.insert(std::make_pair(std::make_pair(0, '0'), 0));
     d.insert(std::make_pair(std::make_pair(0, '1'), 0));
     
-    std::vector<lexer::state> acc = {0};
+
+    std::unordered_map<lexer::state, lexer::acceptType> acc = {{0,1}};
 
     lexer::DFA m(1, acc, 0, d);
 
@@ -63,8 +71,8 @@ void testMinimize1() {
   d.insert(std::make_pair(std::make_pair(6, '0'), 5));
   d.insert(std::make_pair(std::make_pair(6, '1'), 6));
 
-  std::vector<lexer::state> acc = {5};
-  
+  std::unordered_map<lexer::state, lexer::acceptType> acc = {{5,1}};  
+
   lexer::DFA m(7, acc, 0, d);
 
   // verify it accepts {0,1}*10
@@ -116,10 +124,10 @@ void testJoin() {
   d1.insert(std::make_pair(std::make_pair(1, '1'), 0));
   d1.insert(std::make_pair(std::make_pair(2, '0'), 2));
   d1.insert(std::make_pair(std::make_pair(2, '1'), 0));
-  std::vector<lexer::state> acc = {2};
 
+  std::unordered_map<lexer::state, lexer::acceptType> acc = {{2,1}};
+  
   lexer::DFA endsWithTwoZeros(3, acc, 0, d1);
-
 
   std::map<std::pair<lexer::state, lexer::symbol>, lexer::state> d2;
   d2.insert(std::make_pair(std::make_pair(0, '0'), 0));
@@ -165,7 +173,8 @@ void testAccept() {
   d.insert(std::make_pair(std::make_pair(1, '1'), 0));
   d.insert(std::make_pair(std::make_pair(2, '0'), 2));
   d.insert(std::make_pair(std::make_pair(2, '1'), 0));
-  std::vector<lexer::state> acc = {2};
+
+  std::unordered_map<lexer::state, lexer::acceptType> acc = {{2,1}};
 
   lexer::DFA automaton(3, acc, 0, d);
 
@@ -198,5 +207,7 @@ int main() {
   testMinimize1();
 
   testMinimize2();
+
+  testMinimize3();
 
 }

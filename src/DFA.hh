@@ -4,6 +4,7 @@
 #include <map>
 #include <stdint.h>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -13,16 +14,19 @@ namespace lexer {
 
   typedef uint32_t state;
   typedef uint8_t symbol;
+  typedef uint32_t acceptType;
 
 class DFA {
 public:
 
+  static const acceptType REJECT = 0;
+
   DFA();
 
-  DFA(size_t numberOfStates, std::vector<state> &acceptStates,
-     state initialState, std::map<std::pair<state, symbol>, state> &delta);
+  DFA(size_t numberOfStates, std::unordered_map<state, acceptType> acceptStates,
+     state initialState, std::map<std::pair<state, symbol>, state> delta);
 
-  bool accept(std::string &s) const;
+  acceptType accept(std::string &s) const;
 
   static DFA join(DFA const &a, DFA const &b);
 
@@ -32,7 +36,7 @@ public:
 
   void minimize();
 
-  const std::vector<state>& getAcceptStates() const;
+  const std::unordered_map<state, acceptType>& getAcceptStates() const;
 
   const std::map<std::pair<state, symbol>, state>&
   getDelta() const;
@@ -49,7 +53,9 @@ private:
 
   size_t numberOfStates;
 
-  std::vector<state> A; // Accept States. Invariant: A is always sorted.
+
+  std::unordered_map<state, acceptType> A;
+
   state q0; // initial state
   std::map<std::pair<state, symbol>, state> delta; // transition function
   

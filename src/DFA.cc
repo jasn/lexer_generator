@@ -15,97 +15,118 @@
 namespace {
 
   using lexer::state; using lexer::symbol; using lexer::DFA;
+  using lexer::acceptType;
   
   std::map<std::pair<state, symbol>, state>
   getProductDelta(const DFA &a, const DFA &b);
+  
 
-}
+  acceptType helper(std::unordered_map<state, acceptType> &m,
+		    state idx,
+		    acceptType default_) {
+
+    auto x = m.find(idx);
+    
+    if (x == std::end(m)) {
+      return default_;
+    }
+    
+    return x->second;
+
+  }
+
+  
+} // end unnamed namespace
 
 namespace lexer {
 
-  DFA::DFA() : numberOfStates(0), A(std::vector<state>()), 
+  DFA::DFA() : numberOfStates(0), A(std::unordered_map<state, acceptType>()), 
 	     q0(0), delta(std::map<std::pair<state, symbol>, state>()) {  }
 
-  DFA::DFA(size_t numberOfStates, std::vector<state> &acceptStates,
-	 state initialState, std::map<std::pair<state, symbol>, state> &delta) :
-    numberOfStates(numberOfStates), A(acceptStates), q0(initialState), delta(delta) {}
+  DFA::DFA(size_t numberOfStates, std::unordered_map<state, acceptType> A,
+	 state initialState, std::map<std::pair<state, symbol>, state> delta) :
+    numberOfStates(numberOfStates), A(std::move(A)), q0(initialState), delta(std::move(delta)) {}
 
-  bool DFA::accept(std::string &s) const {
+  acceptType DFA::accept(std::string &s) const {
     state currentState = q0;
 
     for (auto c : s) {
       auto nextState = delta.find(std::make_pair(currentState, c));
       if (nextState == delta.end()) {
 	// no such edge from current state, i.e. crash occurs.
-	return false;
+	return 0;
       }
       currentState = nextState->second;
     }
 
-    return std::binary_search(std::begin(A), std::end(A), currentState);
+   
+    auto ret = A.find(currentState);
+    return ret == std::end(A) ? 0 : ret->second;
+
   }
 
 
   DFA DFA::join(const DFA &a, const DFA &b) {
-    std::vector<state> newAcceptStates;
+
+    std::unordered_map<state, acceptType> newAccept;
+
     // need to add a crash state for both machines.
     size_t numberOfStates = (a.getNumberOfStates()+1) * (b.getNumberOfStates()+1);
     std::map<std::pair<state, symbol>, state> newDelta(::getProductDelta(a, b));
     
     for (auto x : a.A) {
       for (size_t i = 0; i < b.numberOfStates+1; ++i) {
-	newAcceptStates.push_back(x*(b.numberOfStates+1) + i);
+	newAccept[x.first*(b.numberOfStates+1) + i] = x.second;
+	//newAcceptStates.push_back(x.first*(b.numberOfStates+1) + i);
       }
     }
 
     for (auto x : b.A) {
       for (size_t i = 0; i < a.numberOfStates+1; ++i) {
-	newAcceptStates.push_back(i*(b.numberOfStates+1) + x);
+	state idx = i*(b.numberOfStates+1) + x.first;
+	newAccept[idx] = std::max(newAccept[idx], x.second);
       }
     }
 
-    std::sort(std::begin(newAcceptStates), std::end(newAcceptStates));
-    
-    return DFA(numberOfStates, newAcceptStates, 0, newDelta);
+    return DFA(numberOfStates, newAccept, 0, newDelta);
 
   }
 
   DFA DFA::intersection(const DFA &a, const DFA &b) {
-    std::vector<state> newAcceptStates;
+    std::unordered_map<state, acceptType> newAccept;
+
     // need to add a crash state for both machines.
     size_t numberOfStates = (a.getNumberOfStates()+1) * (b.getNumberOfStates()+1);
     std::map<std::pair<state, symbol>, state> newDelta(::getProductDelta(a, b));
     
     for (auto x : a.A) {
       for (auto y : b.A) {
-	newAcceptStates.push_back(x*(b.numberOfStates+1) + y);	
+	state idx = x.first*(b.numberOfStates+1)+y.first;
+	newAccept[idx] = std::max(x.second, y.second);
       }
     }
 
-    std::sort(std::begin(newAcceptStates), std::end(newAcceptStates));
-    
-    return DFA(numberOfStates, newAcceptStates, 0, newDelta);
+    return DFA(numberOfStates, newAccept, 0, newDelta);
 
   }
   
 
   DFA DFA::minus(const DFA &a, const DFA &b) {
-    std::vector<state> newAcceptStates;
+    std::unordered_map<state, acceptType> newAccept;
+
     // need to add a crash state for both machines.
     size_t numberOfStates = (a.getNumberOfStates()+1) * (b.getNumberOfStates()+1);
     std::map<std::pair<state, symbol>, state> newDelta(::getProductDelta(a, b));
     
     for (auto x : a.A) {
-      for (size_t i = 0; i < b.A.size(); ++i) {
-	if (!std::binary_search(std::begin(b.A), std::end(b.A), i)) {
-	  newAcceptStates.push_back(x*(b.numberOfStates+1) + i);		  
+      for (state bi = 0; bi < b.numberOfStates + 1; ++bi) {
+	if (!b.A.at(bi)) {
+	  newAccept[x.first*(b.numberOfStates+1) + bi] = x.second;
 	}
       }
     }
 
-    std::sort(std::begin(newAcceptStates), std::end(newAcceptStates));
-    
-    return DFA(numberOfStates, newAcceptStates, 0, newDelta);
+    return DFA(numberOfStates, newAccept, 0, newDelta);
     
   }
 
@@ -132,7 +153,7 @@ namespace lexer {
     }
 
 
-    // Find two initial eq classes: accept and not accept.
+    // Find initial eq classes: reject and all accept types
     std::vector<std::vector<bool>> eqClasses(this->numberOfStates, std::vector<bool>(this->numberOfStates, false));
 
     for (state i = 0; i < eqClasses.size(); ++i) {
@@ -141,13 +162,11 @@ namespace lexer {
       for (state j = i+1; j < eqClasses.size(); ++j) {
 	if (reachableStates.find(j) == std::end(reachableStates)) continue;
 
-	if ((std::binary_search(std::begin(A), std::end(A), i) &&
-	     !std::binary_search(std::begin(A), std::end(A), j)) ||
-	    (!std::binary_search(std::begin(A), std::end(A), i) &&
-	     std::binary_search(std::begin(A), std::end(A), j))) {
-	  
-	  eqClasses[i][j] = true;
+	acceptType it = ::helper(A, i, lexer::DFA::REJECT);
+	acceptType jt = ::helper(A, j, lexer::DFA::REJECT);
 
+	if (it != jt) {
+	  eqClasses[i][j] = true;
 	}
       }
     }
@@ -226,21 +245,13 @@ namespace lexer {
 
 
     // Compute new accept states
-    std::vector<state> newAccepts;
+    std::unordered_map<state, acceptType> newAccepts;
 
     for (auto x : A) {
-      state n = oldToNew[x];
-      if (std::find(std::begin(newAccepts), 
-		    std::end(newAccepts),
-		    n) == std::end(newAccepts)) {
-	
-	newAccepts.push_back(n);
-
-      }
+      state n = oldToNew[x.first];
+      newAccepts[n] = std::max(newAccepts[n], x.second);
     }
     
-    std::sort(std::begin(newAccepts), std::end(newAccepts));
-
     this->A = std::move(newAccepts);
 
     this->delta = std::move(newDelta);
@@ -256,7 +267,8 @@ namespace lexer {
     ss << "digraph M {" << std::endl;
 
     for (auto x : this->A) {
-      ss << "s" << x << "[ color=blue ];" << std::endl;
+      if (x.second)
+	ss << "s" << x.first << "[ color=blue ];" << std::endl;
     }
     
     for (auto x : this->delta) {
@@ -268,7 +280,7 @@ namespace lexer {
     return ss.str();
   }  
 
-  const std::vector<state>& DFA::getAcceptStates() const {
+  const std::unordered_map<state, acceptType>& DFA::getAcceptStates() const {
     return A;
   }
 
@@ -347,4 +359,5 @@ namespace {
     return newDelta;
     
   }
+
 } // end noname namespace
