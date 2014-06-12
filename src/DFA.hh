@@ -8,18 +8,12 @@
 #include <unordered_set>
 #include <vector>
 
-
+#include "lexer_common.hh"
 
 namespace lexer {
 
-  typedef uint32_t state;
-  typedef uint8_t symbol;
-  typedef uint32_t acceptType;
-
 class DFA {
 public:
-
-  static const acceptType REJECT = 0;
 
   DFA();
 
@@ -52,7 +46,6 @@ public:
 private:
 
   size_t numberOfStates;
-
 
   std::unordered_map<state, acceptType> A;
 

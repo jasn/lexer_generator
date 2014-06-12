@@ -8,9 +8,9 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include "DFA.hh"
 
-#include <iostream>
+#include "DFA.hh"
+#include "lexer_common.hh"
 
 namespace {
 
@@ -162,8 +162,8 @@ namespace lexer {
       for (state j = i+1; j < eqClasses.size(); ++j) {
 	if (reachableStates.find(j) == std::end(reachableStates)) continue;
 
-	acceptType it = ::helper(A, i, lexer::DFA::REJECT);
-	acceptType jt = ::helper(A, j, lexer::DFA::REJECT);
+	acceptType it = ::helper(A, i, lexer::REJECT);
+	acceptType jt = ::helper(A, j, lexer::REJECT);
 
 	if (it != jt) {
 	  eqClasses[i][j] = true;
