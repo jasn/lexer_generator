@@ -175,7 +175,7 @@ namespace lexer {
     // Iteratively find equivalence classes.
     // Fixed point computation.
     bool done = false;
-    std::unordered_set<symbol> alphabet = this->getAlphabet();
+    std::unordered_set<symbol> alphabet = lexer::getAlphabet(*this);
     while (!done) {
       done = true;
       for (state i = 0; i < eqClasses.size(); ++i) {
@@ -321,8 +321,8 @@ namespace {
     std::map<std::pair<state, symbol>, state> newDelta;
     
 
-    std::unordered_set<symbol> aAlpha = a.getAlphabet();
-    std::unordered_set<symbol> bAlpha = b.getAlphabet();
+    std::unordered_set<symbol> aAlpha = lexer::getAlphabet(a);
+    std::unordered_set<symbol> bAlpha = lexer::getAlphabet(b);
 
     std::unordered_set<symbol> newAlphabet(std::begin(aAlpha), std::end(aAlpha));
     newAlphabet.insert(std::begin(bAlpha), std::end(bAlpha));

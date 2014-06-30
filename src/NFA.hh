@@ -17,18 +17,22 @@ namespace lexer {
     std::unordered_map<state, acceptType> A;
     size_t numberOfStates;
     state q0;
+    void lambdaElimination();
 
   public:
     
-    NFA(std::multimap<std::pair<state, symbol>, state> delta,
-        std::unordered_map<state, acceptType> A,
-        size_t numberOfStates, state q0);
+    NFA(size_t numberOfStates, std::unordered_map<state, acceptType> A,
+	state q0, std::multimap<std::pair<state, symbol>, state> delta);
+	
   
-    acceptType accept(std::string &s) const;
+    const std::multimap<std::pair<state, symbol>, state>&
+    getDelta() const;
 
-    void lambdaElimination();
+    acceptType accept(std::string &s) const;
     
     DFA determinize();
+    
+    std::string toDot() const;
   };
   
 } // end lexer namespace
