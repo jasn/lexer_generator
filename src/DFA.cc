@@ -132,6 +132,23 @@ namespace lexer {
 
   void DFA::minimize() {
 
+    // Minimization algorithm only works if all states have all
+    // characters as outgoing edges. So we add the missing ones to
+    // a default reject state.
+    
+
+    std::unordered_set<symbol> alphabet = lexer::getAlphabet(*this);
+
+    for (state s = 0; s < numberOfStates; ++s) {
+      for (auto c : alphabet) {
+	auto x = delta.find(std::make_pair(s, c));
+	if (x == std::end(delta)) {
+	  delta.insert(std::make_pair(std::make_pair(s, c), numberOfStates));
+	}
+      }
+    }
+    ++numberOfStates;
+
     // eliminate unreachable states
     std::unordered_set<state> reachableStates;
     
@@ -175,7 +192,7 @@ namespace lexer {
     // Iteratively find equivalence classes.
     // Fixed point computation.
     bool done = false;
-    std::unordered_set<symbol> alphabet = lexer::getAlphabet(*this);
+
     while (!done) {
       done = true;
       for (state i = 0; i < eqClasses.size(); ++i) {

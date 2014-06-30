@@ -43,6 +43,8 @@ void testDeterminize() {
 
   lexer::DFA deterministic = std::move(automaton.determinize()); 
 
+  deterministic.minimize();
+
   std::cout << deterministic.toDot() << std::endl;
 
 }
