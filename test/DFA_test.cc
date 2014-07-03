@@ -105,7 +105,54 @@ void testMinimize1() {
 }
 
 void testMinus() {
-  std::cout << "No tests for minus yet." << std::endl;
+  std::cout << "#### Starting minus tests ####" << std::endl;
+
+  // d1: accepts 001*0
+  std::map<std::pair<lexer::state, lexer::symbol>, lexer::state> d1;
+  d1.insert(std::make_pair(std::make_pair(0, '0'), 1));
+  d1.insert(std::make_pair(std::make_pair(1, '0'), 2));
+  d1.insert(std::make_pair(std::make_pair(2, '1'), 2));
+  d1.insert(std::make_pair(std::make_pair(2, '0'), 3));
+  std::unordered_map<lexer::state, lexer::acceptType> acc1 = {{3, 1}};
+
+  lexer::DFA m1(4, acc1, 0, d1);
+
+  // d2: accepts {01}*10
+  std::map<std::pair<lexer::state, lexer::symbol>, lexer::state> d2;
+  d2.insert(std::make_pair(std::make_pair(0, '0'), 0));
+  d2.insert(std::make_pair(std::make_pair(0, '1'), 1));
+  d2.insert(std::make_pair(std::make_pair(1, '0'), 2));
+  d2.insert(std::make_pair(std::make_pair(1, '1'), 1));
+  d2.insert(std::make_pair(std::make_pair(2, '0'), 0));
+  d2.insert(std::make_pair(std::make_pair(2, '1'), 1));
+  std::unordered_map<lexer::state, lexer::acceptType> acc2 = {{3, 1}};
+
+  lexer::DFA m2(3, acc2, 0, d2);
+
+  // d1 minus d2: 000
+
+  lexer::DFA m3 = std::move(lexer::DFA::minus(m1, m2));
+
+  std::string accStr = "000";
+
+  std::vector<std::string> rejStrs = {"0000", "00", "0011110", "", "0", "100"};
+
+  if (m3.accept(accStr) == lexer::REJECT) {
+    std::cout << "Error in testMinus:" << std::endl;
+    std::cout << "Rejected string: " << accStr << "   but should have been accepted" << std::endl;
+    return;
+  }
+
+  for (auto &x : rejStrs) {
+    if (m3.accept(x) != lexer::REJECT) {
+      std::cout << "Error in testMinus:" << std::endl;
+      std::cout << "Accepted string: " << x << "   but should have been rejected" << std::endl;
+      return;
+    }
+  }
+
+  std::cout << "testMinus: passed" << std::endl;
+
 }
 
 void testIntersection() {
