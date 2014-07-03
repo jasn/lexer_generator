@@ -125,14 +125,17 @@ void testMinus() {
   d2.insert(std::make_pair(std::make_pair(1, '1'), 1));
   d2.insert(std::make_pair(std::make_pair(2, '0'), 0));
   d2.insert(std::make_pair(std::make_pair(2, '1'), 1));
-  std::unordered_map<lexer::state, lexer::acceptType> acc2 = {{3, 1}};
+  std::unordered_map<lexer::state, lexer::acceptType> acc2 = {{2, 1}};
 
   lexer::DFA m2(3, acc2, 0, d2);
 
-  // d1 minus d2: 000
+  // d1 minus d2: Language = {000}
 
   lexer::DFA m3 = std::move(lexer::DFA::minus(m1, m2));
 
+  //std::cout << "m3 size: " << m3.getNumberOfStates() << std::endl;
+  m3.minimize();
+  std::cout << m3.toDot() << std::endl;
   std::string accStr = "000";
 
   std::vector<std::string> rejStrs = {"0000", "00", "0011110", "", "0", "100"};

@@ -35,7 +35,7 @@ public:
   const std::map<std::pair<state, symbol>, state>&
   getDelta() const;
 
-  state getInitialState();
+  state getInitialState() const;
 
   size_t getNumberOfStates() const;
 

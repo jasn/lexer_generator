@@ -116,17 +116,23 @@ namespace lexer {
 
     // need to add a crash state for both machines.
     size_t numberOfStates = (a.getNumberOfStates()+1) * (b.getNumberOfStates()+1);
+
     std::map<std::pair<state, symbol>, state> newDelta(::getProductDelta(a, b));
     
     for (auto x : a.A) {
-      for (state bi = 0; bi < b.numberOfStates + 1; ++bi) {
-	if (!b.A.at(bi)) {
-	  newAccept[x.first*(b.numberOfStates+1) + bi] = x.second;
-	}
+      newAccept[x.first*(b.numberOfStates + 1) + b.numberOfStates] = x.second;
+      for (state bi = 0; bi < b.numberOfStates; ++bi) {
+    	auto y = b.A.find(bi);
+    	if (y != std::end(b.A)) continue;
+
+    	newAccept[x.first*(b.numberOfStates+1) + bi] = x.second;
+
       }
     }
 
-    return DFA(numberOfStates, newAccept, 0, newDelta);
+    return DFA(numberOfStates, newAccept, 
+a.getInitialState()*(b.getNumberOfStates()+1) + b.getInitialState(), 
+	       newDelta);
     
   }
 
@@ -307,7 +313,7 @@ namespace lexer {
   }
 
 
-  state DFA::getInitialState() {
+  state DFA::getInitialState() const {
     return q0;
   }
 
@@ -335,8 +341,7 @@ namespace {
   std::map<std::pair<state, symbol>, state>
   getProductDelta(const DFA &a, const DFA &b) {
     size_t numberOfStates = (a.getNumberOfStates()+1) * (b.getNumberOfStates()+1);
-    std::map<std::pair<state, symbol>, state> newDelta;
-    
+    std::map<std::pair<state, symbol>, state> newDelta; 
 
     std::unordered_set<symbol> aAlpha = lexer::getAlphabet(a);
     std::unordered_set<symbol> bAlpha = lexer::getAlphabet(b);
@@ -344,10 +349,10 @@ namespace {
     std::unordered_set<symbol> newAlphabet(std::begin(aAlpha), std::end(aAlpha));
     newAlphabet.insert(std::begin(bAlpha), std::end(bAlpha));
 
-    for (state ai = 0; ai < a.getNumberOfStates(); ++ai) {
-      for (state bi = 0; bi < b.getNumberOfStates(); ++bi) {
+    for (state ai = 0; ai < a.getNumberOfStates()+1; ++ai) {
+      for (state bi = 0; bi < b.getNumberOfStates()+1; ++bi) {
 	state currentState = ai*(b.getNumberOfStates()+1) + bi;
-	
+
 	for (auto s : newAlphabet) {
 	  state as, bs;
 
@@ -355,18 +360,18 @@ namespace {
 	  auto bTransition = b.getDelta().find(std::make_pair(bi, s));
 
 	  if (aTransition == std::end(a.getDelta())) {
-	    as = a.getNumberOfStates()+1;
+	    as = a.getNumberOfStates();
 	  } else {
 	    as = aTransition->second;
 	  }
 	  if (bTransition == std::end(b.getDelta())) {
-	    bs = b.getNumberOfStates()+1;
+	    bs = b.getNumberOfStates();
 	  } else {
 	    bs = bTransition->second;
 	  }
 
 	  state resultState = as * (b.getNumberOfStates()+1) + bs;
-
+	  
 	  newDelta[std::make_pair(currentState, s)] = resultState;
 
 	}
