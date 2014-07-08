@@ -21,13 +21,13 @@ void testMinimize2() {
     std::map<std::pair<lexer::state, lexer::symbol>, lexer::state> d;
     d.insert(std::make_pair(std::make_pair(0, '0'), 0));
     d.insert(std::make_pair(std::make_pair(0, '1'), 0));
-    
 
     std::unordered_map<lexer::state, lexer::acceptType> acc = {{0,1}};
 
     lexer::DFA m(1, acc, 0, d);
 
     std::vector<std::string> strs = {"", "0", "1", "00", "01", "10", "11" };
+
 
     for (auto x : strs) {
       if (!m.accept(x)) {
@@ -90,7 +90,7 @@ void testMinimize1() {
   for (auto x : strs) {
     if (!m.accept(x)) {
       std::cout << "Failed test 'Minimize 1': After minimize m Did not accept string: " << x << std::endl;
-      std::cout << m.toDot() << std::endl;
+      //std::cout << m.toDot() << std::endl;
       return;
     }
   }
@@ -109,10 +109,11 @@ void testMinus() {
 
   // d1: accepts 001*0
   std::map<std::pair<lexer::state, lexer::symbol>, lexer::state> d1;
-  d1.insert(std::make_pair(std::make_pair(0, '0'), 1));
+  d1.insert(std::make_pair(std::make_pair(0, '0'), 1));  
   d1.insert(std::make_pair(std::make_pair(1, '0'), 2));
   d1.insert(std::make_pair(std::make_pair(2, '1'), 2));
   d1.insert(std::make_pair(std::make_pair(2, '0'), 3));
+
   std::unordered_map<lexer::state, lexer::acceptType> acc1 = {{3, 1}};
 
   lexer::DFA m1(4, acc1, 0, d1);
@@ -132,10 +133,9 @@ void testMinus() {
   // d1 minus d2: Language = {000}
 
   lexer::DFA m3 = std::move(lexer::DFA::minus(m1, m2));
-
-  //std::cout << "m3 size: " << m3.getNumberOfStates() << std::endl;
+  
   m3.minimize();
-  std::cout << m3.toDot() << std::endl;
+
   std::string accStr = "000";
 
   std::vector<std::string> rejStrs = {"0000", "00", "0011110", "", "0", "100"};

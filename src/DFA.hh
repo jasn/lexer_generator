@@ -51,7 +51,8 @@ private:
 
   state q0; // initial state
   std::map<std::pair<state, symbol>, state> delta; // transition function
-  
+
+  void addCrashState();
 
 
 };

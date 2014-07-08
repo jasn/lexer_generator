@@ -54,14 +54,13 @@ namespace lexer {
       auto nextState = delta.find(std::make_pair(currentState, c));
       if (nextState == delta.end()) {
 	// no such edge from current state, i.e. crash occurs.
-	return 0;
+	return lexer::REJECT;
       }
       currentState = nextState->second;
     }
-
    
     auto ret = A.find(currentState);
-    return ret == std::end(A) ? 0 : ret->second;
+    return (ret == std::end(A)) ? lexer::REJECT : ret->second;
 
   }
 
@@ -136,24 +135,27 @@ a.getInitialState()*(b.getNumberOfStates()+1) + b.getInitialState(),
     
   }
 
+  void DFA::addCrashState() {
+    std::unordered_set<symbol> alphabet = lexer::getAlphabet(*this);
+
+    bool additionalState = false;
+    for (state s = 0; s < numberOfStates; ++s) {
+      for (auto c : alphabet) {
+	additionalState = additionalState || 
+	  delta.insert(std::make_pair(std::make_pair(s, c), numberOfStates)).second;
+      }
+    }
+    if (additionalState) ++numberOfStates;
+    
+  }
+
   void DFA::minimize() {
 
     // Minimization algorithm only works if all states have all
     // characters as outgoing edges. So we add the missing ones to
     // a default reject state.
-    
-
     std::unordered_set<symbol> alphabet = lexer::getAlphabet(*this);
-
-    for (state s = 0; s < numberOfStates; ++s) {
-      for (auto c : alphabet) {
-	auto x = delta.find(std::make_pair(s, c));
-	if (x == std::end(delta)) {
-	  delta.insert(std::make_pair(std::make_pair(s, c), numberOfStates));
-	}
-      }
-    }
-    ++numberOfStates;
+    this->addCrashState();
 
     // eliminate unreachable states
     std::unordered_set<state> reachableStates;
@@ -166,34 +168,72 @@ a.getInitialState()*(b.getNumberOfStates()+1) + b.getInitialState(),
       
       // iterate through edges
       auto it = delta.lower_bound(std::make_pair(curr, std::numeric_limits<symbol>::min()));
-      while (it->first.first == curr) {
-	if (reachableStates.find(it->second) == std::end(reachableStates)) {
-	  reachableStates.insert(it->second);
+      while (it->first.first == curr) {	
+	if (reachableStates.insert(it->second).second) {
 	  Q.push(it->second);
 	}
 	++it;
       }
     }
 
+    {
+
+      std::map<state, state> remapping;
+      std::unordered_map<state, acceptType> newAccepts;
+      remapping[q0] = 0;
+      size_t cnt = 0;
+      // Remove all unreachable states before minimizing
+      for (auto x : reachableStates) {
+	if (x == q0) {
+	  auto tmp = A.find(x);
+	  if (tmp != std::end(A)) {
+	    newAccepts[0] = tmp->second;
+	  }
+	  continue;
+	}
+	remapping[x] = ++cnt;
+	auto val = A.find(x);
+	if (val != std::end(A)) {
+	  newAccepts[cnt] = val->second;
+	}
+      }
+
+      std::map<std::pair<state, symbol>, state> newDelta;
+
+      for (auto x : reachableStates) {
+	auto it = delta.lower_bound({x, std::numeric_limits<symbol>::min()});
+	while (it->first.first == x) {
+	  auto target = remapping.find(it->second);
+	  if (target != std::end(remapping)) {
+	    newDelta.insert({{remapping[x], it->first.second}, target->second});
+	  }
+	  ++it;
+	}
+      }
+
+      this->delta = std::move(newDelta);
+      this->A = std::move(newAccepts);
+      this->q0 = 0;
+      this->numberOfStates = reachableStates.size();
+
+      this->addCrashState();
+    }
 
     // Find initial eq classes: reject and all accept types
-    std::vector<std::vector<bool>> eqClasses(this->numberOfStates, std::vector<bool>(this->numberOfStates, false));
+    std::vector<std::vector<bool>> distinguishable(this->numberOfStates, std::vector<bool>(this->numberOfStates, false));
 
-    for (state i = 0; i < eqClasses.size(); ++i) {
-      if (reachableStates.find(i) == std::end(reachableStates)) continue;
+    for (state i = 0; i < distinguishable.size(); ++i) {
 
-      for (state j = i+1; j < eqClasses.size(); ++j) {
-	if (reachableStates.find(j) == std::end(reachableStates)) continue;
+      for (state j = i+1; j < distinguishable.size(); ++j) {
 
 	acceptType it = ::helper(A, i, lexer::REJECT);
 	acceptType jt = ::helper(A, j, lexer::REJECT);
 
 	if (it != jt) {
-	  eqClasses[i][j] = true;
+	  distinguishable[i][j] = true;
 	}
       }
     }
-
 
     // Iteratively find equivalence classes.
     // Fixed point computation.
@@ -201,55 +241,55 @@ a.getInitialState()*(b.getNumberOfStates()+1) + b.getInitialState(),
 
     while (!done) {
       done = true;
-      for (state i = 0; i < eqClasses.size(); ++i) {
-	if (reachableStates.find(i) == std::end(reachableStates)) continue;
+      for (state i = 0; i < distinguishable.size(); ++i) {
+	//if (reachableStates.find(i) == std::end(reachableStates)) continue;
 
-	for (state j = i+1; j < eqClasses.size(); ++j) {
-	  if (reachableStates.find(j) == std::end(reachableStates)) continue;
+	for (state j = i+1; j < distinguishable.size(); ++j) {
+	  //if (reachableStates.find(j) == std::end(reachableStates)) continue;
 
 	  for (auto s : alphabet) {
-	    if (delta.find(std::make_pair(i, s)) == std::end(delta) ||
-		delta.find(std::make_pair(j, s)) == std::end(delta)) {
-	      continue;
-	    }
 	    
 	    state si = delta.find(std::make_pair(i, s))->second;
 	    state sj = delta.find(std::make_pair(j, s))->second;
 
-	    bool before = eqClasses[i][j];
-	    eqClasses[i][j] = eqClasses[si][sj] || eqClasses[sj][si] || eqClasses[i][j];
+	    bool before = distinguishable[i][j];
+	    distinguishable[i][j] = distinguishable[si][sj] || distinguishable[sj][si] || distinguishable[i][j];
 	    
-	    if (!before && eqClasses[i][j]) done = false;
+	    if (!before && distinguishable[i][j]) done = false;
 	  }
 	}
       }      
     }
 
-
     // Compute new states, one for each equivalence class
     // Create mappings between old and new states.
-    uint32_t counter = 1;
+    uint32_t counter = 0;
     std::unordered_map<state, std::vector<state> > newToOlds;
     std::unordered_map<state, state> oldToNew;
-    newToOlds.insert(std::make_pair(0, std::vector<state>(1,0)));
-    oldToNew[q0] = 0;
 
-    for (size_t j = 1; j < eqClasses.size(); ++j) {
+    for (state j = 0; j < distinguishable.size(); ++j) {
+
       bool newState = true;
       for (state i = 0; i < j; ++i) {
-	if (!eqClasses[i][j]) {
-	  // j and i are in the same eq class
-	  newToOlds[oldToNew[i]].push_back(j);
-	  oldToNew[j] = oldToNew[i];
-	  newState = false;
+
+	if (distinguishable[i][j]) {
+	  continue;
 	}
+	// j and i are in the same eq class
+	newToOlds[oldToNew[i]].push_back(j);
+	oldToNew[j] = oldToNew[i];
+	newState = false;
+	break;
       }
+
       if (newState) {
-	newToOlds.insert(std::make_pair(counter, std::vector<state>(1, j)));
+	newToOlds.insert({counter , {j} });
 	oldToNew[j] = counter;
 	++counter;
       }
     }
+
+    q0 = oldToNew[q0];
 
     // Compute new transition function
     std::map<std::pair<state, symbol>, state> newDelta;
@@ -258,7 +298,7 @@ a.getInitialState()*(b.getNumberOfStates()+1) + b.getInitialState(),
       state start = x.first;
       for (auto s : alphabet) {
 	state oldStart = x.second[0];
-	if (delta.find(std::make_pair(oldStart, s)) == std::end(delta)) continue;
+
 	state oldEnd = delta.find(std::make_pair(oldStart, s))->second;
 	state target = oldToNew[oldEnd];
 	newDelta.insert(std::make_pair(std::make_pair(start, s), target));
@@ -272,7 +312,7 @@ a.getInitialState()*(b.getNumberOfStates()+1) + b.getInitialState(),
 
     for (auto x : A) {
       state n = oldToNew[x.first];
-      newAccepts[n] = std::max(newAccepts[n], x.second);
+      newAccepts[n] = x.second;
     }
     
     this->A = std::move(newAccepts);
