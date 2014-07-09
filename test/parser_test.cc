@@ -7,6 +7,8 @@
 #include "../src/parser.hh"
 #include "../src/RegularExpression.hh"
 
+#define KEGLE "40"
+
 using namespace lexer;
 
 std::stringstream ss;
@@ -107,9 +109,15 @@ int main() {
 
   ss << "}" << std::endl;
 
-  std::ifstream ifs("parser_test_output");
+  std::ifstream ifs(std::string(CMAKE_SOURCE_DIR)+"/test/parser_test_output");
   std::stringstream ss2;
   std::string s1, s2;
+
+  if (!ifs.good()) {
+    std::cout << "Error in parser test" << std::endl;
+    exit(EXIT_FAILURE);  
+  }
+
   while (ifs.good() && ss.good()) {
     getline(ifs, s1);
     getline(ss, s2);
