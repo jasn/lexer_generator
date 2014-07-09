@@ -4,5 +4,8 @@ add_library (lexer
 	    NFA.hh
 	    NFA.cc
 	    lexer_common.hh
+	    parser.hh
+	    parser.cc
+	    RegularExpression.hh
 )
 
