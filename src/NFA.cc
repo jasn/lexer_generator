@@ -87,12 +87,16 @@ namespace lexer {
           nextStateSpace.insert((its.first)->second);
           ++(its.first);
         }
-        
+
+	// only takes 1 lambda step, there could be multiple...
+	// essentially need to do bfs through lambdas.
+	// probably should do that at some point..
         its = delta.equal_range(std::make_pair(y, LAMBDA));
         while (its.first != its.second) {
           nextStateSpace.insert((its.first)->second);
           ++(its.first);
         }
+
       }
 
       std::swap(nextStateSpace, currStateSpace);

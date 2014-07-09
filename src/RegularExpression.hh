@@ -44,7 +44,7 @@ struct RegExpConcat : public RegularExpression {
 
   // add lambda transition for each accept in left to initial in right
 
-  virtual lexer::NFA getNFA(acceptType at) {
+  virtual lexer::NFA getNFA(acceptType at) const {
     NFA l = std::move(left->getNFA(at));
     NFA r = std::move(right->getNFA(at));
     return NFA::concat(l, r);
@@ -65,7 +65,7 @@ struct RegExpPlus : public RegularExpression {
  
   // add lambda transition for each accept to initial
 
-  virtual lexer::NFA getNFA(acceptType at) {
+  virtual lexer::NFA getNFA(acceptType at) const {
     NFA in = std::move(inner->getNFA(at));
     return NFA::addPlus(in);
   }
@@ -85,7 +85,7 @@ struct RegExpStar : public RegularExpression {
 
   // add lambda transition for each accept to initial and make initial accept
 
-  virtual lexer::NFA getNFA(acceptType at) {
+  virtual lexer::NFA getNFA(acceptType at) const {
     NFA in = std::move(inner->getNFA(at));
     return NFA::addStar(in, at);
   }
@@ -110,7 +110,7 @@ struct RegExpOr : public RegularExpression {
 
   // join the two automatons.
 
-  virtual lexer::NFA getNFA(acceptType at) {
+  virtual lexer::NFA getNFA(acceptType at) const {
     NFA l = std::move(left->getNFA(at));
     NFA r = std::move(right->getNFA(at));
     return NFA::join(l, r);
@@ -149,7 +149,7 @@ struct RegExpChars : public RegularExpression {
     os << "\"}" << std::endl;
   }
 
-  virtual NFA getNFA(acceptType at) {
+  virtual lexer::NFA getNFA(acceptType at) const {
     return NFA::simpleAccept(chars, at);
   }
 
