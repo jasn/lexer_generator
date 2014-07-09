@@ -17,6 +17,15 @@ namespace {
 
   using lexer::acceptType;
 
+  void addLambdaFromAcceptToInitial(std::multimap<std::pair<state, symbol>, state> &newDelta,
+				    std::unordered_map<state, acceptType> &newAccepts,
+				    state newInitial) {    
+    for (auto x : newAccepts) {
+      newDelta.insert(std::make_pair(std::make_pair(x.first, lexer::LAMBDA), newInitial));
+    }
+
+  }
+
   acceptType getAcceptType(std::set<state> &s, std::unordered_map<state, acceptType> A) {
     acceptType a = 0;
     for (auto x : s) {
@@ -99,6 +108,134 @@ namespace lexer {
     }
 
     return res;
+  }
+
+  NFA NFA::concat(const NFA &a, const NFA &b) {
+
+    size_t aSize = a.getNumberOfStates();
+    size_t bSize = b.getNumberOfStates();
+
+    auto aDelta = a.getDelta();
+    auto bDelta = b.getDelta();
+
+    std::multimap<std::pair<state, symbol>, state> newDelta;
+    std::unordered_map<state, acceptType> newAccepts;
+
+    size_t newSize = aSize + bSize;
+
+    newDelta.insert(std::begin(aDelta), std::end(aDelta));
+    
+    for (auto x : bDelta) {
+      newDelta.insert(std::make_pair(std::make_pair(x.first.first+aSize, x.first.second),
+				     x.second + aSize));
+    }
+
+    state bNewInitial = b.getInitialState() + aSize;
+    
+    for (auto x : a.getAcceptStates()) {
+      newDelta.insert(std::make_pair(std::make_pair(x.first, lexer::LAMBDA), 
+				     bNewInitial));
+    }
+
+    for (auto x : b.getAcceptStates()) {
+      newAccepts.insert({x.first+aSize, x.second});
+    }
+
+    return NFA(newSize, newAccepts, a.getInitialState(), newDelta);
+
+  }
+
+  NFA NFA::addStar(const NFA &a, acceptType at) {
+    std::multimap<std::pair<state, symbol>, state> newDelta(a.getDelta());
+    std::unordered_map<state, acceptType> newAccepts(a.getAcceptStates());
+    size_t newSize = a.getNumberOfStates();
+    state newInitial = a.getInitialState();
+    
+    addLambdaFromAcceptToInitial(newDelta, newAccepts, newInitial);
+    
+    if (newAccepts.count(newInitial) == 0) {
+      newAccepts[newInitial] = at;
+    }
+
+    return NFA(newSize, newAccepts, newInitial, newDelta);
+  }
+
+  NFA NFA::addPlus(const NFA &a) {
+    std::multimap<std::pair<state, symbol>, state> newDelta(a.getDelta());
+    std::unordered_map<state, acceptType> newAccepts(a.getAcceptStates());
+    size_t newSize = a.getNumberOfStates();
+    state newInitial = a.getInitialState();
+
+    addLambdaFromAcceptToInitial(newDelta, newAccepts, newInitial);
+    return NFA(newSize, newAccepts, newInitial, newDelta);
+  }
+
+  NFA NFA::join(const NFA &a, const NFA &b) {
+
+    
+    std::multimap<std::pair<state, symbol>, state> newDelta;
+    std::unordered_map<state, acceptType> newAccepts;
+
+    size_t newSize = a.getNumberOfStates() + b.getNumberOfStates() + 1;
+    size_t newInitial = 0;
+    size_t aSize = a.getNumberOfStates();
+
+    state aInitial = a.getInitialState();
+    state bInitial = b.getInitialState();
+
+    for (auto x : a.getDelta()) {
+      newDelta.insert(std::make_pair(std::make_pair(x.first.first+1, x.first.second), 
+				     x.second+1));
+    }
+
+    for (auto x : b.getDelta()) {
+      newDelta.insert(std::make_pair(std::make_pair(x.first.first+1+aSize, x.first.second), 
+				     x.second+1+aSize));
+    }
+
+    newDelta.insert(std::make_pair(std::make_pair(newInitial, lexer::LAMBDA), 
+				   aInitial+1));
+    newDelta.insert(std::make_pair(std::make_pair(newInitial, lexer::LAMBDA), 
+				   bInitial+1+aSize));
+
+    for (auto x : a.getAcceptStates()) {
+      newAccepts.insert({x.first+1, x.second});
+    }
+
+    for (auto x : b.getAcceptStates()) {
+      newAccepts.insert({x.first+1+aSize, x.second});
+    }
+
+    return NFA(newSize, newAccepts, newInitial, newDelta);
+  }
+
+  NFA NFA::simpleAccept(std::unordered_set<symbol> accSymbols, acceptType at) {
+    std::multimap<std::pair<state, symbol>, state> newDelta;
+    std::unordered_map<state, acceptType> newAccepts;
+
+    size_t newSize = 2;
+    state newInitial = 0;
+
+    for (auto x : accSymbols) {
+      newDelta.insert({{0, x}, 1});
+    }
+
+    newAccepts[1] = at;
+
+    return NFA(newSize, newAccepts, newInitial, newDelta);
+  }
+
+  const size_t NFA::getNumberOfStates() const {
+    return this->numberOfStates;
+  }
+
+  const state NFA::getInitialState() const {
+    return this->q0;
+  }
+
+  const std::unordered_map<state, acceptType> &
+  NFA::getAcceptStates() const {
+    return A;
   }
 
   void NFA::lambdaElimination() {

@@ -25,14 +25,28 @@ namespace lexer {
 	state q0, std::multimap<std::pair<state, symbol>, state> delta);
 	
   
+    static NFA concat(const NFA &a, const NFA &b);
+    static NFA addStar(const NFA &a, acceptType at);
+    static NFA addPlus(const NFA &a);
+    static NFA join(const NFA &a, const NFA &b);
+    static NFA simpleAccept(std::unordered_set<symbol> accSymbols, acceptType at);
+
     const std::multimap<std::pair<state, symbol>, state>&
     getDelta() const;
+
+    const size_t getNumberOfStates() const;
+    const state getInitialState() const;
+    const std::unordered_map<state, acceptType> &
+    getAcceptStates() const;
 
     acceptType accept(std::string &s) const;
     
     DFA determinize();
     
     std::string toDot() const;
+
+
+
   };
   
 } // end lexer namespace

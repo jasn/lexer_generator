@@ -51,12 +51,11 @@ std::shared_ptr<RegularExpression> Parser::parseStarPlus() {
 std::shared_ptr<RegularExpression> Parser::parseInner() {
   if (*pos == '\\' && pos+1 < end) {
     ++pos;
-    std::unordered_set<char> tmp({*pos++});
-    return std::make_shared<RegExpChars, std::initializer_list<char>>({*pos++}, false);
+    return std::make_shared<RegExpChars, std::initializer_list<symbol>>({static_cast<symbol>(*pos++)}, false);
   }
   if (*pos == '.') {
     ++pos;
-    return std::make_shared<RegExpChars, std::initializer_list<char>>({}, true);
+    return std::make_shared<RegExpChars, std::initializer_list<symbol>>({}, true);
   } 
   if (*pos == '[') {
     ++pos;
@@ -66,7 +65,7 @@ std::shared_ptr<RegularExpression> Parser::parseInner() {
       ++pos;
     }
   
-    std::unordered_set<char> chars;
+    std::unordered_set<symbol> chars;
     while (*pos != ']') {
       switch (*pos) {
       case '\\':
@@ -75,7 +74,7 @@ std::shared_ptr<RegularExpression> Parser::parseInner() {
 	  std::cerr << "you failed" << std::endl;
 	  exit(EXIT_FAILURE);	  
 	}
-	chars.insert(*pos++);
+	chars.insert(static_cast<symbol>(*pos++));
 	break;
       case '-': {
 	// note [-z] means all characters from '[' to 'z'.
@@ -88,9 +87,9 @@ std::shared_ptr<RegularExpression> Parser::parseInner() {
 	  std::cerr << "you failed" << std::endl;
 	  exit(EXIT_FAILURE);
 	}
-	chars.insert(r);
+	chars.insert(static_cast<symbol>(r));
 	while (l != r) {
-	  chars.insert(l++);
+	  chars.insert(static_cast<symbol>(l++));
 	}
 	++pos;
 	break;
@@ -100,7 +99,7 @@ std::shared_ptr<RegularExpression> Parser::parseInner() {
 	exit(EXIT_FAILURE);
 	break;
       default:
-	chars.insert(*pos++);
+	chars.insert(static_cast<symbol>(*pos++));
 	break;
       }
     }
@@ -122,7 +121,7 @@ std::shared_ptr<RegularExpression> Parser::parseInner() {
     std::cerr << "you failed" << std::endl;
     exit(EXIT_FAILURE);
   }
-  return std::make_shared<RegExpChars, std::initializer_list<char>>({*pos++}, false);
+  return std::make_shared<RegExpChars, std::initializer_list<symbol>>({static_cast<symbol>(*pos++)}, false);
 
 }
 
