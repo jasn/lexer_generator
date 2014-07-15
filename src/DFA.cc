@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cctype>
 #include <iostream>
 #include <limits>
 #include <map>
@@ -9,8 +10,10 @@
 #include <unordered_set>
 #include <vector>
 
-#include "DFA.hh"
 #include "lexer_common.hh"
+
+#include "DFA.hh"
+
 
 namespace {
 
@@ -21,20 +24,10 @@ namespace {
   getProductDelta(const DFA &a, const DFA &b);
   
 
-  acceptType helper(std::unordered_map<state, acceptType> &m,
-		    state idx,
-		    acceptType default_) {
-
-    auto x = m.find(idx);
-    
-    if (x == std::end(m)) {
-      return default_;
-    }
-    
-    return x->second;
-
+  std::string f(lexer::acceptType a) {
+    std::vector<std::string> colors = { "black", "blue", "green", "yellow", "orange", "red", "magenta", "purple", "cyan", "teal", "pink", "brown", "grey", "crimson" };
+    return colors[a%colors.size()];
   }
-
   
 } // end unnamed namespace
 
@@ -44,14 +37,26 @@ namespace lexer {
 	     q0(0), delta(std::map<std::pair<state, symbol>, state>()) {  }
 
   DFA::DFA(size_t numberOfStates, std::unordered_map<state, acceptType> A,
-	 state initialState, std::map<std::pair<state, symbol>, state> delta) :
+	     state initialState, std::map<std::pair<state, symbol>, state> delta) :
     numberOfStates(numberOfStates), A(std::move(A)), q0(initialState), delta(std::move(delta)) {}
 
-  acceptType DFA::accept(std::string &s) const {
+  acceptType DFA::getAcceptTypeForState(const state idx, const acceptType default_) const {
+
+    auto x = A.find(idx);
+    
+    if (x == std::end(A)) {
+      return default_;
+    }
+    
+    return x->second;
+
+  }
+
+  acceptType DFA::accept(const std::string &s) const {
     state currentState = q0;
 
     for (auto c : s) {
-      auto nextState = delta.find(std::make_pair(currentState, c));
+auto nextState = delta.find(std::make_pair(currentState, symbol(c)));
       if (nextState == delta.end()) {
 	// no such edge from current state, i.e. crash occurs.
 	return lexer::REJECT;
@@ -141,11 +146,17 @@ a.getInitialState()*(b.getNumberOfStates()+1) + b.getInitialState(),
     bool additionalState = false;
     for (state s = 0; s < numberOfStates; ++s) {
       for (auto c : alphabet) {
-	additionalState = additionalState || 
-	  delta.insert(std::make_pair(std::make_pair(s, c), numberOfStates)).second;
+	if (delta.insert(std::make_pair(std::make_pair(s, c), numberOfStates)).second)
+	  additionalState = true;
       }
     }
-    if (additionalState) ++numberOfStates;
+    if (additionalState) {
+
+      for (auto c : alphabet) {
+	delta.insert({{numberOfStates, c}, numberOfStates});
+      }
+      ++numberOfStates;
+    }
     
   }
 
@@ -167,7 +178,7 @@ a.getInitialState()*(b.getNumberOfStates()+1) + b.getInitialState(),
       state curr = Q.front(); Q.pop();
       
       // iterate through edges
-      auto it = delta.lower_bound(std::make_pair(curr, std::numeric_limits<symbol>::min()));
+      auto it = delta.lower_bound(std::make_pair(curr, symbol::min()));
       while (it->first.first == curr) {	
 	if (reachableStates.insert(it->second).second) {
 	  Q.push(it->second);
@@ -201,7 +212,7 @@ a.getInitialState()*(b.getNumberOfStates()+1) + b.getInitialState(),
       std::map<std::pair<state, symbol>, state> newDelta;
 
       for (auto x : reachableStates) {
-	auto it = delta.lower_bound({x, std::numeric_limits<symbol>::min()});
+	auto it = delta.lower_bound({x, symbol::min()});
 	while (it->first.first == x) {
 	  auto target = remapping.find(it->second);
 	  if (target != std::end(remapping)) {
@@ -226,8 +237,8 @@ a.getInitialState()*(b.getNumberOfStates()+1) + b.getInitialState(),
 
       for (state j = i+1; j < distinguishable.size(); ++j) {
 
-	acceptType it = ::helper(A, i, lexer::REJECT);
-	acceptType jt = ::helper(A, j, lexer::REJECT);
+	acceptType it = getAcceptTypeForState(i, lexer::REJECT);
+	acceptType jt = getAcceptTypeForState(j, lexer::REJECT);
 
 	if (it != jt) {
 	  distinguishable[i][j] = true;
@@ -327,21 +338,46 @@ a.getInitialState()*(b.getNumberOfStates()+1) + b.getInitialState(),
 
   std::string DFA::toDot() const {
     std::stringstream ss;
+
     ss << "digraph M {" << std::endl;
 
     for (auto x : this->A) {
-      if (x.second)
-	ss << "s" << x.first << "[ color=blue ];" << std::endl;
+      if (x.second) {
+	ss << "s" << x.first << "[ color=" << f(x.second) << " ];" << std::endl;
+      }
     }
     
-    for (auto x : this->delta) {
-      ss << "s" << x.first.first << " -> s" << x.second
-	 << " [ label=\"" << x.first.second <<"\" ];" << std::endl;
+    state rejectState;
+    for (state s = 0; s < numberOfStates; ++s) {
+      auto iter = delta.lower_bound({s, symbol::min() });
+      if (A.count(s)) continue;
+      while (iter->first.first == s) {
+	if (iter->second != s) break;
+	++iter;
+      }
+      if (iter->first.first == s) continue;
+      rejectState = s;
+      break;
+    }
+
+    std::map<std::pair<state, state>, std::set<symbol> > edges;
+
+    for (auto edge : delta) {
+      if (edge.second == rejectState) continue;
+      edges[{edge.first.first, edge.second}].insert(edge.first.second);
+    }
+
+    for (auto x : edges) {
+      state s1 = x.first.first;
+      state s2 = x.first.second;      
+      ss << "s" << s1 << " -> s" << s2 << " [ label=\"";
+      ss << symbol_writer(std::begin(x.second), std::end(x.second));
+      ss << "\" ];" << std::endl;
     }
 
     ss << "}";
     return ss.str();
-  }  
+  }
 
   const std::unordered_map<state, acceptType>& DFA::getAcceptStates() const {
     return A;

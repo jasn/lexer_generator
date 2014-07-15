@@ -70,11 +70,22 @@ std::shared_ptr<RegularExpression> Parser::parseInner() {
       switch (*pos) {
       case '\\':
 	++pos;
-	if (pos == end) {
-	  std::cerr << "you failed" << std::endl;
-	  exit(EXIT_FAILURE);	  
+	switch (*pos) {
+	case '\0':
+	  throw std::runtime_error("you failed");
+	case 'n':
+	  chars.insert(symbol('\n'));
+	  break;
+	case 'r':
+	  chars.insert(symbol('\r'));
+	  break;
+	case 't':
+	  chars.insert(symbol('\t'));
+	  break;
+	default:
+	  chars.insert(static_cast<symbol>(*pos));
 	}
-	chars.insert(static_cast<symbol>(*pos++));
+	++pos;
 	break;
       case '-': {
 	// note [-z] means all characters from '[' to 'z'.
@@ -84,7 +95,7 @@ std::shared_ptr<RegularExpression> Parser::parseInner() {
 	char r = *(pos+1);
 	if (r == '\\') r = *(pos+2);
 	if (l > r) {
-	  std::cerr << "you failed" << std::endl;
+	  throw std::runtime_error("you failed");
 	  exit(EXIT_FAILURE);
 	}
 	chars.insert(static_cast<symbol>(r));
@@ -95,8 +106,7 @@ std::shared_ptr<RegularExpression> Parser::parseInner() {
 	break;
       }
       case '\0':
-	std::cerr << "you failed" << std::endl;
-	exit(EXIT_FAILURE);
+	throw std::runtime_error("you failed");
 	break;
       default:
 	chars.insert(static_cast<symbol>(*pos++));
@@ -111,28 +121,26 @@ std::shared_ptr<RegularExpression> Parser::parseInner() {
     ++pos;
     std::shared_ptr<RegularExpression> center = parseOr();
     if (*pos != ')') {
-      std::cerr << "you failed" << std::endl;
-      exit(EXIT_FAILURE);
+      throw std::runtime_error("you failed");
     }
     ++pos;
     return center;
   }
   if (*pos == '+' || *pos == '*' || *pos == ')' || *pos == ']' || *pos == '\\') {
-    std::cerr << "you failed" << std::endl;
-    exit(EXIT_FAILURE);
+    throw std::runtime_error("you failed");
   }
   return std::make_shared<RegExpChars, std::initializer_list<symbol>>({static_cast<symbol>(*pos++)}, false);
 
 }
 
-std::pair<std::string, std::shared_ptr<RegularExpression> > parseLine(std::string &line) {
+tkn_rule parseLine(std::string &line) {
 
   std::stringstream ss;
   size_t pos = 0;
   for (; pos < line.length()-1; ++pos) {
     if (line[pos] == ':' && line[pos+1] == '=') {
       pos += 2;
-      break;      
+      break;
     }
 
     if (line[pos] != ' ')
@@ -143,21 +151,25 @@ std::pair<std::string, std::shared_ptr<RegularExpression> > parseLine(std::strin
 
   std::string name = ss.str();
   std::string rest = line.substr(pos);
-  
   Parser p(rest);
 
-  return make_pair(name, p.parseTree);
+  tkn_rule a = {name, p.parseTree, name[0]=='_'};
+
+  return a;
 
 }
 
-void parseFile(std::ifstream file) {
 
+std::vector<tkn_rule>
+parseFile(std::istream &file) {
+  std::vector<tkn_rule> ret;
   std::string line;
   while (file.good()) {
     std::getline(file, line);
-    parseLine(line);
+    if (line.size() == 0) continue;
+    ret.push_back(parseLine(line));
   }
-
+  return ret;
 }
 
 }

@@ -7,6 +7,8 @@
 
 size_t counter = 1;
 
+using lexer::symbol;
+
 void printResult(bool success) {
   std::cout << "Test case #" << counter++ << ":\t" << (success?"Pass":"Fail") << std::endl;
 }
@@ -19,8 +21,8 @@ void testMinimize3() {
 
 void testMinimize2() {
     std::map<std::pair<lexer::state, lexer::symbol>, lexer::state> d;
-    d.insert(std::make_pair(std::make_pair(0, '0'), 0));
-    d.insert(std::make_pair(std::make_pair(0, '1'), 0));
+    d.insert(std::make_pair(std::make_pair(0, symbol('0')), 0));
+    d.insert(std::make_pair(std::make_pair(0, symbol('1')), 0));
 
     std::unordered_map<lexer::state, lexer::acceptType> acc = {{0,1}};
 
@@ -56,20 +58,20 @@ void testMinimize1() {
 
   std::map<std::pair<lexer::state, lexer::symbol>, lexer::state> d;
   // recognizes {0,1}*10
-  d.insert(std::make_pair(std::make_pair(0, '0'), 1));
-  d.insert(std::make_pair(std::make_pair(0, '1'), 2));
-  d.insert(std::make_pair(std::make_pair(1, '0'), 3));
-  d.insert(std::make_pair(std::make_pair(1, '1'), 4));
-  d.insert(std::make_pair(std::make_pair(2, '0'), 5));
-  d.insert(std::make_pair(std::make_pair(2, '1'), 6));
-  d.insert(std::make_pair(std::make_pair(3, '0'), 3));
-  d.insert(std::make_pair(std::make_pair(3, '1'), 4));
-  d.insert(std::make_pair(std::make_pair(4, '0'), 5));
-  d.insert(std::make_pair(std::make_pair(4, '1'), 6));
-  d.insert(std::make_pair(std::make_pair(5, '0'), 3));
-  d.insert(std::make_pair(std::make_pair(5, '1'), 4));
-  d.insert(std::make_pair(std::make_pair(6, '0'), 5));
-  d.insert(std::make_pair(std::make_pair(6, '1'), 6));
+  d.insert(std::make_pair(std::make_pair(0, symbol('0')), 1));
+  d.insert(std::make_pair(std::make_pair(0, symbol('1')), 2));
+  d.insert(std::make_pair(std::make_pair(1, symbol('0')), 3));
+  d.insert(std::make_pair(std::make_pair(1, symbol('1')), 4));
+  d.insert(std::make_pair(std::make_pair(2, symbol('0')), 5));
+  d.insert(std::make_pair(std::make_pair(2, symbol('1')), 6));
+  d.insert(std::make_pair(std::make_pair(3, symbol('0')), 3));
+  d.insert(std::make_pair(std::make_pair(3, symbol('1')), 4));
+  d.insert(std::make_pair(std::make_pair(4, symbol('0')), 5));
+  d.insert(std::make_pair(std::make_pair(4, symbol('1')), 6));
+  d.insert(std::make_pair(std::make_pair(5, symbol('0')), 3));
+  d.insert(std::make_pair(std::make_pair(5, symbol('1')), 4));
+  d.insert(std::make_pair(std::make_pair(6, symbol('0')), 5));
+  d.insert(std::make_pair(std::make_pair(6, symbol('1')), 6));
 
   std::unordered_map<lexer::state, lexer::acceptType> acc = {{5,1}};  
 
@@ -109,10 +111,10 @@ void testMinus() {
 
   // d1: accepts 001*0
   std::map<std::pair<lexer::state, lexer::symbol>, lexer::state> d1;
-  d1.insert(std::make_pair(std::make_pair(0, '0'), 1));  
-  d1.insert(std::make_pair(std::make_pair(1, '0'), 2));
-  d1.insert(std::make_pair(std::make_pair(2, '1'), 2));
-  d1.insert(std::make_pair(std::make_pair(2, '0'), 3));
+  d1.insert(std::make_pair(std::make_pair(0, symbol('0')), 1));  
+  d1.insert(std::make_pair(std::make_pair(1, symbol('0')), 2));
+  d1.insert(std::make_pair(std::make_pair(2, symbol('1')), 2));
+  d1.insert(std::make_pair(std::make_pair(2, symbol('0')), 3));
 
   std::unordered_map<lexer::state, lexer::acceptType> acc1 = {{3, 1}};
 
@@ -120,12 +122,12 @@ void testMinus() {
 
   // d2: accepts {01}*10
   std::map<std::pair<lexer::state, lexer::symbol>, lexer::state> d2;
-  d2.insert(std::make_pair(std::make_pair(0, '0'), 0));
-  d2.insert(std::make_pair(std::make_pair(0, '1'), 1));
-  d2.insert(std::make_pair(std::make_pair(1, '0'), 2));
-  d2.insert(std::make_pair(std::make_pair(1, '1'), 1));
-  d2.insert(std::make_pair(std::make_pair(2, '0'), 0));
-  d2.insert(std::make_pair(std::make_pair(2, '1'), 1));
+  d2.insert(std::make_pair(std::make_pair(0, symbol('0')), 0));
+  d2.insert(std::make_pair(std::make_pair(0, symbol('1')), 1));
+  d2.insert(std::make_pair(std::make_pair(1, symbol('0')), 2));
+  d2.insert(std::make_pair(std::make_pair(1, symbol('1')), 1));
+  d2.insert(std::make_pair(std::make_pair(2, symbol('0')), 0));
+  d2.insert(std::make_pair(std::make_pair(2, symbol('1')), 1));
   std::unordered_map<lexer::state, lexer::acceptType> acc2 = {{2, 1}};
 
   lexer::DFA m2(3, acc2, 0, d2);
@@ -168,24 +170,24 @@ void testJoin() {
   std::cout << "###########################################" << std::endl;
 
   std::map<std::pair<lexer::state, lexer::symbol>, lexer::state> d1;
-  d1.insert(std::make_pair(std::make_pair(0, '0'), 1));
-  d1.insert(std::make_pair(std::make_pair(0, '1'), 0));
-  d1.insert(std::make_pair(std::make_pair(1, '0'), 2));
-  d1.insert(std::make_pair(std::make_pair(1, '1'), 0));
-  d1.insert(std::make_pair(std::make_pair(2, '0'), 2));
-  d1.insert(std::make_pair(std::make_pair(2, '1'), 0));
+  d1.insert(std::make_pair(std::make_pair(0, symbol('0')), 1));
+  d1.insert(std::make_pair(std::make_pair(0, symbol('1')), 0));
+  d1.insert(std::make_pair(std::make_pair(1, symbol('0')), 2));
+  d1.insert(std::make_pair(std::make_pair(1, symbol('1')), 0));
+  d1.insert(std::make_pair(std::make_pair(2, symbol('0')), 2));
+  d1.insert(std::make_pair(std::make_pair(2, symbol('1')), 0));
 
   std::unordered_map<lexer::state, lexer::acceptType> acc = {{2,1}};
   
   lexer::DFA endsWithTwoZeros(3, acc, 0, d1);
 
   std::map<std::pair<lexer::state, lexer::symbol>, lexer::state> d2;
-  d2.insert(std::make_pair(std::make_pair(0, '0'), 0));
-  d2.insert(std::make_pair(std::make_pair(0, '1'), 1));
-  d2.insert(std::make_pair(std::make_pair(1, '0'), 0));
-  d2.insert(std::make_pair(std::make_pair(1, '1'), 2));
-  d2.insert(std::make_pair(std::make_pair(2, '0'), 0));
-  d2.insert(std::make_pair(std::make_pair(2, '1'), 2));
+  d2.insert(std::make_pair(std::make_pair(0, symbol('0')), 0));
+  d2.insert(std::make_pair(std::make_pair(0, symbol('1')), 1));
+  d2.insert(std::make_pair(std::make_pair(1, symbol('0')), 0));
+  d2.insert(std::make_pair(std::make_pair(1, symbol('1')), 2));
+  d2.insert(std::make_pair(std::make_pair(2, symbol('0')), 0));
+  d2.insert(std::make_pair(std::make_pair(2, symbol('1')), 2));
 
 
   lexer::DFA endsWithTwoOnes(3, acc, 0, d2);
@@ -217,12 +219,12 @@ void testAccept() {
   std::cout << "###########################################" << std::endl;
 
   std::map<std::pair<lexer::state, lexer::symbol>, lexer::state> d;
-  d.insert(std::make_pair(std::make_pair(0, '0'), 1));
-  d.insert(std::make_pair(std::make_pair(0, '1'), 0));
-  d.insert(std::make_pair(std::make_pair(1, '0'), 2));
-  d.insert(std::make_pair(std::make_pair(1, '1'), 0));
-  d.insert(std::make_pair(std::make_pair(2, '0'), 2));
-  d.insert(std::make_pair(std::make_pair(2, '1'), 0));
+  d.insert(std::make_pair(std::make_pair(0, symbol('0')), 1));
+  d.insert(std::make_pair(std::make_pair(0, symbol('1')), 0));
+  d.insert(std::make_pair(std::make_pair(1, symbol('0')), 2));
+  d.insert(std::make_pair(std::make_pair(1, symbol('1')), 0));
+  d.insert(std::make_pair(std::make_pair(2, symbol('0')), 2));
+  d.insert(std::make_pair(std::make_pair(2, symbol('1')), 0));
 
   std::unordered_map<lexer::state, lexer::acceptType> acc = {{2,1}};
 

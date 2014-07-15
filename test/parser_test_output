@@ -37,7 +37,7 @@
 "value":"yxwvihgfeczbdajklmnopqrstu"}
 , "test_range_negated":
 {"type":"chars",
-"value":"_^]\\[ZYXWVUTSRQPONMLKJIHGFEDCBA@?>=<;:9876543210/. !\"#$%&'()*+,-`{|}~"}
+"value":"^]\\[ZYXWVUTSRQPONMLKJIHGFEDCBA@?>=<;:9876543210/.-λ !\"#$%&'()*+,_`{|}~"}
 , "test_parenthesis":
 {"type":"concat",
 "left":
@@ -141,4 +141,3 @@
 }
 }
 }
-

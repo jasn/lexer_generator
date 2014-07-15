@@ -37,6 +37,10 @@ namespace {
     return a;
   }
 
+  std::string f(lexer::acceptType a) {
+    std::vector<std::string> colors = { "black", "blue", "green", "yellow", "orange", "red", "magenta", "purple", "cyan", "teal", "pink", "brown", "grey", "crimson" };
+    return colors[a%colors.size()];
+  }
 
   std::unordered_set<state> getLambdaClosureForState(state s, const std::multimap<std::pair<state, symbol>, state> &delta, size_t numberOfStates) {
     // fixed point computation
@@ -75,34 +79,31 @@ namespace lexer {
            state q0, std::multimap<std::pair<state, symbol>, state> delta) : 
     numberOfStates(numberOfStates), A(std::move(A)), q0(q0), delta(std::move(delta)) { }
 
-  acceptType NFA::accept(std::string &x) const {
 
-    std::unordered_set<state> currStateSpace = {q0};
+  acceptType NFA::accept(const std::string &x) const {
+
+    std::vector<std::unordered_set<state> > lambdaClosures(numberOfStates);
+    for (state i = 0; i < numberOfStates; ++i) {
+      lambdaClosures[i] = std::move(::getLambdaClosureForState(i, delta, numberOfStates));
+    }
     
+    std::unordered_set<state> currStateSpace = lambdaClosures[q0];
+   
     for (auto c : x) {
       std::unordered_set<state> nextStateSpace;
       for (auto y : currStateSpace) {
-        auto its = delta.equal_range(std::make_pair(y, c));
+        auto its = delta.equal_range(std::make_pair(y, symbol(c)));
         while (its.first != its.second) {
-          nextStateSpace.insert((its.first)->second);
+	  // insert lambda closure for target state.
+	  state target = (its.first)->second;
+	  nextStateSpace.insert(std::begin(lambdaClosures[target]),
+				std::end(lambdaClosures[target]));
           ++(its.first);
         }
-
-	// only takes 1 lambda step, there could be multiple...
-	// essentially need to do bfs through lambdas.
-	// probably should do that at some point..
-        its = delta.equal_range(std::make_pair(y, LAMBDA));
-        while (its.first != its.second) {
-          nextStateSpace.insert((its.first)->second);
-          ++(its.first);
-        }
-
       }
-
       std::swap(nextStateSpace, currStateSpace);
     }
     
-
     acceptType res = lexer::REJECT;
     for (auto x : currStateSpace) {
       auto y = A.find(x);
@@ -113,6 +114,8 @@ namespace lexer {
 
     return res;
   }
+
+
 
   NFA NFA::concat(const NFA &a, const NFA &b) {
 
@@ -151,15 +154,15 @@ namespace lexer {
 
   NFA NFA::addStar(const NFA &a, acceptType at) {
     std::multimap<std::pair<state, symbol>, state> newDelta(a.getDelta());
-    std::unordered_map<state, acceptType> newAccepts(a.getAcceptStates());
-    size_t newSize = a.getNumberOfStates();
-    state newInitial = a.getInitialState();
+    std::unordered_map<state, acceptType> newAccepts;
+    size_t newSize = a.getNumberOfStates()+1;
+    state newInitial = newSize-1;
+    auto tmp = a.getAcceptStates();
+    addLambdaFromAcceptToInitial(newDelta, tmp, newInitial);
     
-    addLambdaFromAcceptToInitial(newDelta, newAccepts, newInitial);
-    
-    if (newAccepts.count(newInitial) == 0) {
-      newAccepts[newInitial] = at;
-    }
+    newAccepts[newInitial] = at;
+
+    newDelta.insert({{newInitial, lexer::LAMBDA}, a.getInitialState()});
 
     return NFA(newSize, newAccepts, newInitial, newDelta);
   }
@@ -167,10 +170,13 @@ namespace lexer {
   NFA NFA::addPlus(const NFA &a) {
     std::multimap<std::pair<state, symbol>, state> newDelta(a.getDelta());
     std::unordered_map<state, acceptType> newAccepts(a.getAcceptStates());
-    size_t newSize = a.getNumberOfStates();
-    state newInitial = a.getInitialState();
+    size_t newSize = a.getNumberOfStates() + 1;
+    state newInitial = newSize - 1;
 
     addLambdaFromAcceptToInitial(newDelta, newAccepts, newInitial);
+
+    newDelta.insert({{newInitial, lexer::LAMBDA}, a.getInitialState()});
+
     return NFA(newSize, newAccepts, newInitial, newDelta);
   }
 
@@ -257,8 +263,8 @@ namespace lexer {
     for (state s = 0; s < numberOfStates; ++s) {
       for (auto x : lambdaClosures[s]) {
 	// get all edges out of x -- note s is included in lambdaClosures[s]
-	auto it = delta.lower_bound(std::make_pair(x, std::numeric_limits<symbol>::min()));
-	auto itEnd = delta.upper_bound(std::make_pair(x, std::numeric_limits<symbol>::max()));
+	auto it = delta.lower_bound(std::make_pair(x, symbol::min()));
+	auto itEnd = delta.upper_bound(std::make_pair(x, symbol::max()));
 	
 	while (it != itEnd) {
 	  
@@ -412,6 +418,7 @@ namespace lexer {
     return DFA(visitedTime.size(), properAcceptTypes, 0, properDelta);
   }
 
+
   const std::multimap<std::pair<state, symbol>, state>&
   NFA::getDelta() const {
     return delta;
@@ -419,16 +426,40 @@ namespace lexer {
 
   std::string NFA::toDot() const {
     std::stringstream ss;
+
     ss << "digraph M {" << std::endl;
 
     for (auto x : this->A) {
-      if (x.second)
-	ss << "s" << x.first << "[ color=blue ];" << std::endl;
+      if (x.second) {
+	ss << "s" << x.first << "[ color=" << f(x.second) << " ];" << std::endl;
+      }
     }
     
-    for (auto x : this->delta) {
-      ss << "s" << x.first.first << " -> s" << x.second
-	 << " [ label=\"" << x.first.second <<"\" ];" << std::endl;
+    state rejectState;
+    for (state s = 0; s < numberOfStates; ++s) {
+      auto iter = delta.find({s, symbol::min() });
+      if (A.count(s)) continue;
+      while (iter->first.first == s) {
+	if (iter->second != s) break;
+	++iter;
+      }
+      if (iter->first.first == s) continue;
+      rejectState = s;
+      break;
+    }
+
+    std::map<std::pair<state, state>, std::set<symbol> > edges;
+
+    for (auto edge : delta) {
+      edges[{edge.first.first, edge.second}].insert(edge.first.second);
+    }
+
+    for (auto x : edges) {
+      state s1 = x.first.first;
+      state s2 = x.first.second;      
+      ss << "s" << s1 << " -> s" << s2 << " [ label=\"";
+      ss << symbol_writer(std::begin(x.second), std::end(x.second));
+      ss << "\" ];" << std::endl;
     }
 
     ss << "}";

@@ -20,7 +20,9 @@ public:
   DFA(size_t numberOfStates, std::unordered_map<state, acceptType> acceptStates,
      state initialState, std::map<std::pair<state, symbol>, state> delta);
 
-  acceptType accept(std::string &s) const;
+  acceptType getAcceptTypeForState(const state idx, const acceptType default_) const;
+
+  acceptType accept(const std::string &s) const;
 
   static DFA join(DFA const &a, DFA const &b);
 

@@ -3,10 +3,18 @@
 
 #include <string>
 #include <memory>
-
 #include "RegularExpression.hh"
 
 namespace lexer {
+
+struct tkn_rule {
+  std::string name;
+  std::shared_ptr<RegularExpression> regexp;
+  bool ignore = false;   
+
+  tkn_rule(std::string name, std::shared_ptr<RegularExpression> regexp, bool ignore = false) :
+    name(name), regexp(regexp), ignore(ignore) {}
+};
 
 class Parser {
 
@@ -26,9 +34,9 @@ private:
   
 };
 
-std::pair<std::string, std::shared_ptr<RegularExpression> > parseLine(std::string &line);
+tkn_rule parseLine(std::string &line);
 
-void parseFile(std::ifstream file);
+std::vector<tkn_rule> parseFile(std::istream &file);
 
 } // end namespace lexer
 #endif

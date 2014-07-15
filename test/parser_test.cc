@@ -17,68 +17,68 @@ void test_concat() {
 
   std::string line = "X := abc";
 
-  std::pair<std::string, std::shared_ptr<RegularExpression> > parsed(lexer::parseLine(line));
+  tkn_rule parsed(lexer::parseLine(line));
 
-  parsed.second->printType(ss);
+  parsed.regexp->printType(ss);
 
 }
 
 void test_star() {
   std::string line = "X := a*";
 
-  std::pair<std::string, std::shared_ptr<RegularExpression> > parsed(lexer::parseLine(line));
+  tkn_rule parsed(lexer::parseLine(line));
 
-  parsed.second->printType(ss);
+  parsed.regexp->printType(ss);
 }
 
 void test_plus() {
   std::string line = "X := a+";
 
-  std::pair<std::string, std::shared_ptr<RegularExpression> > parsed(lexer::parseLine(line));
+  tkn_rule parsed(lexer::parseLine(line));
 
-  parsed.second->printType(ss);
+  parsed.regexp->printType(ss);
 }
 
 void test_or() {
   std::string line = "X := a|b";
 
-  std::pair<std::string, std::shared_ptr<RegularExpression> > parsed(lexer::parseLine(line));
+  tkn_rule parsed(lexer::parseLine(line));
 
-  parsed.second->printType(ss);
+  parsed.regexp->printType(ss);
 
 }
 
 void test_range() {
   std::string line = "X := [a-z]";
 
-  std::pair<std::string, std::shared_ptr<RegularExpression> > parsed(lexer::parseLine(line));
+  tkn_rule parsed(lexer::parseLine(line));
 
-  parsed.second->printType(ss);
+  parsed.regexp->printType(ss);
 }
 
 void test_range_negated() {
   std::string line = "X := [^a-z]";
 
-  std::pair<std::string, std::shared_ptr<RegularExpression> > parsed(lexer::parseLine(line));
+  tkn_rule parsed(lexer::parseLine(line));
 
-  parsed.second->printType(ss);
+  parsed.regexp->printType(ss);
 }
 
 void test_parenthesis() {
   std::string line = "X := (aab)*a";
 
-  std::pair<std::string, std::shared_ptr<RegularExpression> > parsed(lexer::parseLine(line));
+  tkn_rule parsed(lexer::parseLine(line));
 
-  parsed.second->printType(ss);
+  parsed.regexp->printType(ss);
 
 }
 
 void test_precedence() {
   std::string line = "X := ab*aa(bba)*ab|aab[ab]";
 
-  std::pair<std::string, std::shared_ptr<RegularExpression> > parsed(lexer::parseLine(line));
+  tkn_rule parsed(lexer::parseLine(line));
 
-  parsed.second->printType(ss);
+  parsed.regexp->printType(ss);
 }
 
 int main() {

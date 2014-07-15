@@ -1,4 +1,4 @@
- #ifndef REGULAR_EXPRESSION_HH_GUARD
+#ifndef REGULAR_EXPRESSION_HH_GUARD
 #define REGULAR_EXPRESSION_HH_GUARD
 
 #include <memory>
@@ -123,12 +123,12 @@ struct RegExpChars : public RegularExpression {
 
   RegExpChars(std::unordered_set<symbol> chars, bool invert) {
     if (invert) {
-      for (symbol x = std::numeric_limits<symbol>::min();
-	   x != std::numeric_limits<symbol>::max(); ++x) {
+      for (symbol x = symbol::min();
+	   x != symbol::max(); ++x) {
 	if (!chars.count(x)) this->chars.insert(x);
       }
-      if (!chars.count(std::numeric_limits<symbol>::max())) {
-	this->chars.insert(std::numeric_limits<symbol>::max());
+      if (!chars.count(symbol::max())) {
+	this->chars.insert(symbol::max());
       }
     } else {
       this->chars = std::move(chars);
@@ -141,8 +141,7 @@ struct RegExpChars : public RegularExpression {
     os << "{\"type\":\"chars\"," << std::endl;
     os << "\"value\":\"";
     for (auto x : chars) {
-      if (x < 32 || x > 126) continue;
-      if (x == '\\' || x == '"')
+      if (x.val == '\\' || x.val == '"')
 	os << "\\";
       os << x;
     }

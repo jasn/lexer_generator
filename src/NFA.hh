@@ -39,7 +39,7 @@ namespace lexer {
     const std::unordered_map<state, acceptType> &
     getAcceptStates() const;
 
-    acceptType accept(std::string &s) const;
+    acceptType accept(const std::string &s) const;
     
     DFA determinize();
     

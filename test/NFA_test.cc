@@ -10,6 +10,8 @@
 
 size_t counter = 0;
 
+using lexer::symbol;
+
 template<typename T1, typename T2>
 bool agree(T1 &m1, T2 &m2, std::string &x, std::string error) {
   if (m1.accept(x) != m2.accept(x)) {
@@ -39,12 +41,12 @@ void testDeterminize() {
   // Language: 0*(01)*0*
   std::multimap<std::pair<lexer::state, lexer::symbol>, lexer::state> d;
   
-  d.insert(std::make_pair(std::make_pair(0,'0'), 0));
+  d.insert(std::make_pair(std::make_pair(0,symbol('0')), 0));
   d.insert(std::make_pair(std::make_pair(0,lexer::LAMBDA), 1));
-  d.insert(std::make_pair(std::make_pair(1,'0'), 2));
+  d.insert(std::make_pair(std::make_pair(1,symbol('0')), 2));
   d.insert(std::make_pair(std::make_pair(1,lexer::LAMBDA), 3));
-  d.insert(std::make_pair(std::make_pair(2, '1'), 1));
-  d.insert(std::make_pair(std::make_pair(3, '0'), 3));
+  d.insert(std::make_pair(std::make_pair(2,symbol( '1')), 1));
+  d.insert(std::make_pair(std::make_pair(3,symbol( '0')), 3));
   
   std::unordered_map<lexer::state, lexer::acceptType> acc = {{3,1}};
 
@@ -70,10 +72,10 @@ void testDeterminize2() {
   // should accept {01}*10
   std::multimap<std::pair<lexer::state, lexer::symbol>, lexer::state> d;
 
-  d.insert(std::make_pair(std::make_pair(0,'0'), 0));
-  d.insert(std::make_pair(std::make_pair(0,'1'), 0));
-  d.insert(std::make_pair(std::make_pair(0,'1'), 1));
-  d.insert(std::make_pair(std::make_pair(1,'0'), 2));
+  d.insert(std::make_pair(std::make_pair(0,symbol('0')), 0));
+  d.insert(std::make_pair(std::make_pair(0,symbol('1')), 0));
+  d.insert(std::make_pair(std::make_pair(0,symbol('1')), 1));
+  d.insert(std::make_pair(std::make_pair(1,symbol('0')), 2));
 
   std::unordered_map<lexer::state, lexer::acceptType> acc = {{2, 1}};
 
