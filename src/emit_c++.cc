@@ -1,34 +1,60 @@
 #include "emit_c++.hh"
 #include "DFA.hh"
 
+#include <cctype>
+#include <iostream>
 #include <map>
 #include <set>
-#include <iostream>
 #include <sstream>
 
 using namespace lexer;
 
-std::string lexer::emit_dfa(const DFA &d, std::vector<std::string> &names) {
-  std::stringstream os;
+const std::string indent = "    ";
 
-  os << "enum class TokenType {" << std::endl;
+void lexer::emit_dfa(const DFA &d, std::vector<std::string> &names, std::ostream &hhFile, std::ostream &ccFile) {
+  
+  std::stringstream oscc;
+  std::stringstream oshh;
+  hhFile << "#ifndef TOKENIZER_HH_GUARD" << std::endl;
+  hhFile << "#define TOKENIZER_HH_GUARD" << std::endl << std::endl;
+
+  hhFile << "#include <stdint.h>" << std::endl << std::endl;
+  hhFile << "enum class TokenType {" << std::endl;
+  hhFile << indent;
   for (auto &s : names) {
-    os << s << ", ";
+    hhFile << s << ", ";
   }
-  os << "END_OF_FILE, INVALID" << std::endl << "};" << std::endl << std::endl;
+  hhFile << "END_OF_FILE, INVALID" << std::endl << "};" << std::endl << std::endl;
 
-  os << "struct Token {" << std::endl;
-  os << "char *start, *curr;" << std::endl;
-  os << "TokenType tkn" << std::endl;
-  os << "};" << std::endl;
+  hhFile << "struct Token {" << std::endl;
+  hhFile << indent << "char *start, *curr;" << std::endl;
+  hhFile << indent << "TokenType tkn;" << std::endl;
+  hhFile << "};" << std::endl;
 
-  os << std::endl << std::endl;
-  os << "Token getNextToken(char *curr) {" << std::endl << std::endl;
+  hhFile << std::endl << std::endl;
+
+  hhFile << "struct Tokenizer {" << std::endl << std::endl;
+  hhFile << indent << "char *str;" << std::endl << std::endl;
+  hhFile << indent << "Tokenizer(char *str) : str(str) {}" << std::endl << std::endl;
+  hhFile << indent << "Token getNextToken();" << std::endl << std::endl;
+  hhFile << "};" << std::endl << std::endl;
+  
+  hhFile << "#endif // TOKENIZER_HH_GUARD" << std::endl;
+  
+  ccFile << "#include \"tokenizer.hh\"" << std::endl << std::endl;
+  ccFile << "Token Tokenizer::getNextToken() {" << std::endl << std::endl;
+  
+  ccFile << std::endl;
+  ccFile << indent << "uint8_t *start;" << std::endl;
+  ccFile << indent << "uint8_t *curr = reinterpret_cast<uint8_t*>(str);" << std::endl;
+  ccFile << "beginning:" << std::endl;
+  ccFile << indent << "start = curr;" << std::endl << std::endl;
 
   auto delta = d.getDelta();
   auto accepts = d.getAcceptStates();
   size_t numberOfStates = d.getNumberOfStates();
-  
+  state q0 = d.getInitialState();
+
   state rejectState;
   for (state s = 0; s < numberOfStates; ++s) {
     auto iter = delta.lower_bound({s, symbol::min() });
@@ -42,7 +68,13 @@ std::string lexer::emit_dfa(const DFA &d, std::vector<std::string> &names) {
     break;
   }
 
+  ccFile << indent << "goto s" << q0 << ";" << std::endl << std::endl;
+
   std::map<state, std::map<state, std::set<symbol> > > remapped;
+
+  for (state i = 0; i < numberOfStates; ++i) {
+    remapped[i];
+  }
 
   for (auto x : delta) {
     if (x.second == rejectState) {
@@ -56,36 +88,43 @@ std::string lexer::emit_dfa(const DFA &d, std::vector<std::string> &names) {
 
 
   for (auto x : remapped) {
-    os << "s" << x.first << ":" << std::endl;
-    os << "switch (*curr) {" << std::endl;
+    ccFile << "s" << x.first << ":" << std::endl;
+    ccFile << indent << "switch (*curr) {" << std::endl;
     for (auto y : x.second) {
+      if (x.first == rejectState) continue;
       for (auto z : y.second) {
-	os << "case " << static_cast<int>(z.val) << ":";// << std::endl;
+	ccFile << indent << "case " << static_cast<int>(z.val) << ":" << std::endl;
       }
-      os << "++curr;" << std::endl;
-      os << "goto s" << y.first << ";" << std::endl;
+      ccFile << indent << indent << "++curr;" << std::endl;
+      ccFile << indent << indent << "goto s" << y.first << ";" << std::endl;
     }
 
     if (x.first == d.getInitialState()) {
-      os << "case 0: return {start, curr, Token.END_OF_FILE};" << std::endl;
+      ccFile << indent << "case 0:" << std::endl;
+      ccFile << indent << indent << "str = reinterpret_cast<char*>(curr);" << std::endl;
+      ccFile << indent << indent 
+	     << "return Token{reinterpret_cast<char*>(start), reinterpret_cast<char*>(curr), TokenType::END_OF_FILE};" << std::endl;
     }
     
     acceptType a = d.getAcceptTypeForState(x.first, lexer::REJECT);
 
-    os << "default: " << std::endl;
+    ccFile << indent << "default: " << std::endl;
     if (a == lexer::REJECT) {
-      os << "return {start, curr, Token.INVALID};" << std::endl;
+      if (x.first == d.getInitialState()) {
+	ccFile << indent << indent << "++curr;" << std::endl;
+      }
+      ccFile << indent << indent << "str = reinterpret_cast<char*>(curr);" << std::endl;
+      ccFile << indent << indent << "return Token{reinterpret_cast<char*>(start), reinterpret_cast<char*>(curr), TokenType::INVALID};" << std::endl;
     } else if (names[a-1][0] == '_') { // ignore => go back to start.
-      os << "goto start;" << std::endl;
+      ccFile << indent << indent << "goto beginning;" << std::endl;
     } else {
-      os << "return {start, curr, Token." << names[a-1] << "};" << std::endl;
+      ccFile << indent << indent << "str = reinterpret_cast<char*>(curr);" << std::endl;
+      ccFile << indent << indent << "return Token{reinterpret_cast<char*>(start), reinterpret_cast<char*>(curr), TokenType::" << names[a-1] << "};" << std::endl;
     }
 
-    os << "}" << std::endl;
+    ccFile << indent << "}" << std::endl;
   }
 
-  os << std::endl << "}" << std::endl;
+  ccFile << std::endl << "}" << std::endl;
 
-  
-  return os.str();
 }

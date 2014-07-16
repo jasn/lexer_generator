@@ -99,7 +99,7 @@ namespace lexer {
 namespace std {
 template<>
 struct hash<lexer::symbol>: public std::unary_function<lexer::symbol, size_t> {
-  hash<uint8_t> hash_fn;
+  hash<lexer::symbol::value_type> hash_fn;
   size_t operator()(const lexer::symbol &s) const noexcept {
     return hash_fn(s.val) + s.lambda*13;
   }

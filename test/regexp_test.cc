@@ -17,14 +17,14 @@ int main(int argc, char *argv[]) {
   // tkn_rule parsed(lexer::parseLine(x));
 
   std::stringstream small_lang(
-      "literal := [_a-zA-Z][_a-zA-Z0-9]*\n"
-      "number := 0|[1-9][0-9]*\n"
-      "if := if\n"
-      "else := else\n"
-      "while := while\n"
-      "comment := (//|#)[^\\n]*\n"
-      "whitespace := [\\t ]+\n"
-      "newline := ([\\n]+)|(([\\r][\\n])+)\n"
+      "LITERAL := [_a-zA-Z][_a-zA-Z0-9]*\n"
+      "NUMBER := 0|[1-9][0-9]*\n"
+      "IF := if\n"
+      "ELSE := else\n"
+      "WHILE := while\n"
+      "_COMMENT := (//|#)[^\\n]*\n"
+      "_WHITESPACE := [\\t ]+\n"
+      "_NEWLINE := ([\\n]+)|(([\\r][\\n])+)\n"
 			       );
 
   std::vector<tkn_rule> thingy = parseFile(small_lang);
@@ -44,11 +44,11 @@ int main(int argc, char *argv[]) {
 
   DFA d = f.determinize();
   d.minimize();
+  //std::cout << d.toDot() << std::endl;
       
-      
-  // std::cout << d.toDot() << std::endl;
+  //std::cout << std::endl << std::endl;
 
-  std::cout << std::endl << std::endl;
-
-  std::cout << emit_dfa(d, names) << std::endl;
+  //std::cout << emit_dfa(d, names) << std::endl;
+  
+  emit_dfa(d, names, std::cout, std::cout);
 }
