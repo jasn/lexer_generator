@@ -64,7 +64,7 @@ void lexer::cpp_emitter::emit_dfa(std::vector<tkn_rule> &tkn_rules,
 
   hhFile << "struct Tokenizer {" << std::endl << std::endl;
   hhFile << indent << "const char *str;" << std::endl << std::endl;
-  hhFile << indent << "Tokenizer(char *str) : str(str) {}" << std::endl << std::endl;
+  hhFile << indent << "Tokenizer(const char *str) : str(str) {}" << std::endl << std::endl;
   hhFile << indent << "Token getNextToken();" << std::endl << std::endl;
   hhFile << "};" << std::endl << std::endl;
   

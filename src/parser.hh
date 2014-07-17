@@ -19,7 +19,7 @@ struct tkn_rule {
 class Parser {
 
 public:
-  Parser(std::string line);
+  Parser(std::string line, size_t linenumber, size_t add);
   std::shared_ptr<RegularExpression> parseOr();
   std::shared_ptr<RegularExpression> parseConcat();
   std::shared_ptr<RegularExpression> parseStarPlus();
@@ -29,12 +29,14 @@ public:
 
 private:
   std::string line;
+  size_t linenumber;
+  size_t add;
+  
   const char *pos;
   const char *end;
-  
 };
 
-tkn_rule parseLine(std::string &line);
+tkn_rule parseLine(std::string &line, size_t linenumber);
 
 std::vector<tkn_rule> parseFile(std::istream &file);
 
