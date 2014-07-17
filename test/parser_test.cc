@@ -17,7 +17,7 @@ void test_concat() {
 
   std::string line = "X := abc";
 
-  tkn_rule parsed(lexer::parseLine(line));
+  tkn_rule parsed(lexer::parseLine(line, 0));
 
   parsed.regexp->printType(ss);
 
@@ -26,7 +26,7 @@ void test_concat() {
 void test_star() {
   std::string line = "X := a*";
 
-  tkn_rule parsed(lexer::parseLine(line));
+  tkn_rule parsed(lexer::parseLine(line, 0));
 
   parsed.regexp->printType(ss);
 }
@@ -34,7 +34,7 @@ void test_star() {
 void test_plus() {
   std::string line = "X := a+";
 
-  tkn_rule parsed(lexer::parseLine(line));
+  tkn_rule parsed(lexer::parseLine(line, 0));
 
   parsed.regexp->printType(ss);
 }
@@ -42,7 +42,7 @@ void test_plus() {
 void test_or() {
   std::string line = "X := a|b";
 
-  tkn_rule parsed(lexer::parseLine(line));
+  tkn_rule parsed(lexer::parseLine(line, 0));
 
   parsed.regexp->printType(ss);
 
@@ -51,7 +51,7 @@ void test_or() {
 void test_range() {
   std::string line = "X := [a-z]";
 
-  tkn_rule parsed(lexer::parseLine(line));
+  tkn_rule parsed(lexer::parseLine(line, 0));
 
   parsed.regexp->printType(ss);
 }
@@ -59,7 +59,7 @@ void test_range() {
 void test_range_negated() {
   std::string line = "X := [^a-z]";
 
-  tkn_rule parsed(lexer::parseLine(line));
+  tkn_rule parsed(lexer::parseLine(line, 0));
 
   parsed.regexp->printType(ss);
 }
@@ -67,7 +67,7 @@ void test_range_negated() {
 void test_parenthesis() {
   std::string line = "X := (aab)*a";
 
-  tkn_rule parsed(lexer::parseLine(line));
+  tkn_rule parsed(lexer::parseLine(line, 0));
 
   parsed.regexp->printType(ss);
 
@@ -76,7 +76,7 @@ void test_parenthesis() {
 void test_precedence() {
   std::string line = "X := ab*aa(bba)*ab|aab[ab]";
 
-  tkn_rule parsed(lexer::parseLine(line));
+  tkn_rule parsed(lexer::parseLine(line, 0));
 
   parsed.regexp->printType(ss);
 }

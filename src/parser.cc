@@ -11,9 +11,11 @@
 
 namespace lexer {
 
-  Parser::Parser(std::string line) : line(line), pos(this->line.data()), end(this->line.data()+this->line.size()) {
+Parser::Parser(std::string line, size_t linenumber, size_t add) : 
+  line(line), linenumber(linenumber), add(add), pos(this->line.data()), 
+  end(this->line.data()+this->line.size()) {
   
-    parseTree = parseOr();
+  parseTree = parseOr();
 }
 
 std::shared_ptr<RegularExpression> Parser::parseOr() {
@@ -71,8 +73,13 @@ std::shared_ptr<RegularExpression> Parser::parseInner() {
       case '\\':
 	++pos;
 	switch (*pos) {
-	case '\0':
-	  throw std::runtime_error("you failed");
+	case '\0': {
+	  std::stringstream error_string;
+	  error_string << "Parser error: unexpected null termination" << std::endl;
+	  error_string << "Error on line " << linenumber << " at position "
+		       << (pos - this->line.data()) + add << std::endl;
+	  throw std::runtime_error(error_string.str());
+	}
 	case 'n':
 	  chars.insert(symbol('\n'));
 	  break;
@@ -95,7 +102,7 @@ std::shared_ptr<RegularExpression> Parser::parseInner() {
 	char r = *(pos+1);
 	if (r == '\\') r = *(pos+2);
 	if (l > r) {
-	  throw std::runtime_error("you failed");
+	  throw std::runtime_error("Parser error: Range-error left greater than right");
 	  exit(EXIT_FAILURE);
 	}
 	chars.insert(static_cast<symbol>(r));
@@ -106,7 +113,13 @@ std::shared_ptr<RegularExpression> Parser::parseInner() {
 	break;
       }
       case '\0':
-	throw std::runtime_error("you failed");
+	{
+	  std::stringstream error_string;
+	  error_string << "Parser error: unexpected null termination" << std::endl;
+	  error_string << "Error on line " << linenumber << " at position "
+		       << (pos - this->line.data()) + add << std::endl;
+	  throw std::runtime_error(error_string.str());
+	}
 	break;
       default:
 	chars.insert(static_cast<symbol>(*pos++));
@@ -121,19 +134,26 @@ std::shared_ptr<RegularExpression> Parser::parseInner() {
     ++pos;
     std::shared_ptr<RegularExpression> center = parseOr();
     if (*pos != ')') {
-      throw std::runtime_error("you failed");
+      std::stringstream error_string;
+      error_string << "Parser error: expected right parenthesis but found '";
+      error_string << *pos << "'";
+      throw std::runtime_error(error_string.str());
     }
     ++pos;
     return center;
   }
   if (*pos == '+' || *pos == '*' || *pos == ')' || *pos == ']' || *pos == '\\') {
-    throw std::runtime_error("you failed");
+    std::stringstream error_string;
+    error_string << "Parser error: unexpected symbol: '" << *pos << "'" << std::endl;
+    error_string << "Error on line " << linenumber << " at position "
+		 << (pos - this->line.data()) + add << std::endl;
+    throw std::runtime_error(error_string.str());
   }
   return std::make_shared<RegExpChars, std::initializer_list<symbol>>({static_cast<symbol>(*pos++)}, false);
 
 }
 
-tkn_rule parseLine(std::string &line) {
+tkn_rule parseLine(std::string &line, size_t linenumber) {
 
   std::stringstream ss;
   size_t pos = 0;
@@ -151,7 +171,7 @@ tkn_rule parseLine(std::string &line) {
 
   std::string name = ss.str();
   std::string rest = line.substr(pos);
-  Parser p(rest);
+  Parser p(rest, linenumber, pos);
 
   tkn_rule a = {name, p.parseTree, name[0]=='_'};
 
@@ -164,10 +184,12 @@ std::vector<tkn_rule>
 parseFile(std::istream &file) {
   std::vector<tkn_rule> ret;
   std::string line;
+  size_t linenumber = 0;
   while (file.good()) {
+    ++linenumber;
     std::getline(file, line);
     if (line.size() == 0) continue;
-    ret.push_back(parseLine(line));
+    ret.push_back(parseLine(line, linenumber));
   }
   return ret;
 }

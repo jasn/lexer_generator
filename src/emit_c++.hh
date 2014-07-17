@@ -6,12 +6,16 @@
 #include <vector>
 
 #include "DFA.hh"
+#include "parser.hh"
 
 namespace lexer {
 
+  struct cpp_emitter {
 
-  void emit_dfa(const DFA &d, std::vector<std::string> &names, 
-		std::ostream &hhFile, std::ostream &ccFile);
+    static void emit_dfa(std::vector<tkn_rule> &tkn_rules,
+			 const std::string &outputDirectory);
+
+  };
 
 } // end namespace lexer
 

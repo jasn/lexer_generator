@@ -11,3 +11,5 @@ add_library (lexer
 	    emit_c++.cc
 )
 
+add_executable(generate_lexer generate_lexer.cc)
+target_link_libraries(generate_lexer lexer)
