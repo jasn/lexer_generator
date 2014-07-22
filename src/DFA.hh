@@ -13,12 +13,15 @@
 namespace lexer {
 
 class DFA {
+
 public:
+
+  typedef std::map<std::pair<state, symbol>, state> delta_type;
 
   DFA();
 
   DFA(size_t numberOfStates, std::unordered_map<state, acceptType> acceptStates,
-     state initialState, std::map<std::pair<state, symbol>, state> delta);
+     state initialState, delta_type delta);
 
   acceptType getAcceptTypeForState(const state idx, const acceptType default_) const;
 
@@ -34,7 +37,7 @@ public:
 
   const std::unordered_map<state, acceptType>& getAcceptStates() const;
 
-  const std::map<std::pair<state, symbol>, state>&
+  const delta_type&
   getDelta() const;
 
   state getInitialState() const;
@@ -52,7 +55,7 @@ private:
   std::unordered_map<state, acceptType> A;
 
   state q0; // initial state
-  std::map<std::pair<state, symbol>, state> delta; // transition function
+  delta_type delta; // transition function
 
   void addCrashState();
 

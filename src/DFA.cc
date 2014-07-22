@@ -20,9 +20,8 @@ namespace {
   using lexer::state; using lexer::symbol; using lexer::DFA;
   using lexer::acceptType;
   
-  std::map<std::pair<state, symbol>, state>
+  lexer::DFA::delta_type
   getProductDelta(const DFA &a, const DFA &b);
-  
 
   std::string f(lexer::acceptType a) {
     std::vector<std::string> colors = { "black", "blue", "green", "yellow", "orange", "red", "magenta", "purple", "cyan", "teal", "pink", "brown", "grey", "crimson" };
@@ -34,10 +33,10 @@ namespace {
 namespace lexer {
 
   DFA::DFA() : numberOfStates(0), A(std::unordered_map<state, acceptType>()), 
-	     q0(0), delta(std::map<std::pair<state, symbol>, state>()) {  }
+	     q0(0), delta(delta_type()) {  }
 
   DFA::DFA(size_t numberOfStates, std::unordered_map<state, acceptType> A,
-	     state initialState, std::map<std::pair<state, symbol>, state> delta) :
+	     state initialState, delta_type delta) :
     numberOfStates(numberOfStates), A(std::move(A)), q0(initialState), delta(std::move(delta)) {}
 
   acceptType DFA::getAcceptTypeForState(const state idx, const acceptType default_) const {
@@ -76,7 +75,7 @@ auto nextState = delta.find(std::make_pair(currentState, symbol(c)));
 
     // need to add a crash state for both machines.
     size_t numberOfStates = (a.getNumberOfStates()+1) * (b.getNumberOfStates()+1);
-    std::map<std::pair<state, symbol>, state> newDelta(::getProductDelta(a, b));
+    delta_type newDelta(::getProductDelta(a, b));
     
     for (auto x : a.A) {
       for (size_t i = 0; i < b.numberOfStates+1; ++i) {
@@ -101,7 +100,7 @@ auto nextState = delta.find(std::make_pair(currentState, symbol(c)));
 
     // need to add a crash state for both machines.
     size_t numberOfStates = (a.getNumberOfStates()+1) * (b.getNumberOfStates()+1);
-    std::map<std::pair<state, symbol>, state> newDelta(::getProductDelta(a, b));
+    delta_type newDelta(::getProductDelta(a, b));
     
     for (auto x : a.A) {
       for (auto y : b.A) {
@@ -121,7 +120,7 @@ auto nextState = delta.find(std::make_pair(currentState, symbol(c)));
     // need to add a crash state for both machines.
     size_t numberOfStates = (a.getNumberOfStates()+1) * (b.getNumberOfStates()+1);
 
-    std::map<std::pair<state, symbol>, state> newDelta(::getProductDelta(a, b));
+    delta_type newDelta(::getProductDelta(a, b));
     
     for (auto x : a.A) {
       newAccept[x.first*(b.numberOfStates + 1) + b.numberOfStates] = x.second;
@@ -209,7 +208,7 @@ a.getInitialState()*(b.getNumberOfStates()+1) + b.getInitialState(),
 	}
       }
 
-      std::map<std::pair<state, symbol>, state> newDelta;
+      delta_type newDelta;
 
       for (auto x : reachableStates) {
 	auto it = delta.lower_bound({x, symbol::min()});
@@ -303,7 +302,7 @@ a.getInitialState()*(b.getNumberOfStates()+1) + b.getInitialState(),
     q0 = oldToNew[q0];
 
     // Compute new transition function
-    std::map<std::pair<state, symbol>, state> newDelta;
+    delta_type newDelta;
 
     for (auto x : newToOlds) {
       state start = x.first;
@@ -383,7 +382,7 @@ a.getInitialState()*(b.getNumberOfStates()+1) + b.getInitialState(),
     return A;
   }
 
-  const std::map<std::pair<state, symbol>, state>&
+  const DFA::delta_type &
   DFA::getDelta() const {
     return delta;
   }
@@ -413,11 +412,11 @@ a.getInitialState()*(b.getNumberOfStates()+1) + b.getInitialState(),
 namespace {
 
   using lexer::state; using lexer::symbol; using lexer::DFA;
-  
-  std::map<std::pair<state, symbol>, state>
+
+  lexer::DFA::delta_type
   getProductDelta(const DFA &a, const DFA &b) {
     size_t numberOfStates = (a.getNumberOfStates()+1) * (b.getNumberOfStates()+1);
-    std::map<std::pair<state, symbol>, state> newDelta; 
+    lexer::DFA::delta_type newDelta; 
 
     std::unordered_set<symbol> aAlpha = lexer::getAlphabet(a);
     std::unordered_set<symbol> bAlpha = lexer::getAlphabet(b);
