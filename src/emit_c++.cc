@@ -8,6 +8,7 @@
 #include <map>
 #include <set>
 #include <sstream>
+#include "time.h"
 
 using namespace lexer;
 
@@ -44,6 +45,7 @@ void lexer::cpp_emitter::emit_dfa(std::vector<tkn_rule> &tkn_rules,
   hhFile << "#ifndef TOKENIZER_HH_GUARD" << std::endl;
   hhFile << "#define TOKENIZER_HH_GUARD" << std::endl << std::endl;
 
+  hhFile << "#include <iostream>" << std::endl;
   hhFile << "#include <stdint.h>" << std::endl << std::endl;
 
   hhFile << "namespace lexer {" << std::endl << std::endl;
@@ -53,7 +55,11 @@ void lexer::cpp_emitter::emit_dfa(std::vector<tkn_rule> &tkn_rules,
   for (auto &s : names) {
     hhFile << s << ", ";
   }
-  hhFile << "END_OF_FILE, INVALID" << std::endl << "};" << std::endl << std::endl;
+  hhFile << "END_OF_FILE, INVALID" << std::endl << std::endl;
+
+  hhFile << "};" << std::endl << std::endl;
+
+  hhFile << "std::ostream& operator<<(std::ostream &os, const lexer::TokenType &t);" << std::endl << std::endl;
 
   hhFile << "struct Token {" << std::endl;
   hhFile << indent << "const char *start, *curr;" << std::endl;
@@ -73,7 +79,26 @@ void lexer::cpp_emitter::emit_dfa(std::vector<tkn_rule> &tkn_rules,
   hhFile << "#endif // TOKENIZER_HH_GUARD" << std::endl;
   
   ccFile << "#include \"tokenizer.hh\"" << std::endl << std::endl;
+  
   ccFile << "namespace lexer {" << std::endl << std::endl;
+
+  ccFile << "std::ostream& operator<<(std::ostream &os, const lexer::TokenType &t) {" << std::endl;
+  ccFile << indent << "switch (t) {" << std::endl;
+  for (auto &s : names) {
+    ccFile << indent << "case lexer::TokenType::" << s << ":" << std::endl;
+    ccFile << indent << indent << "os << \"" << s << "\";" << std::endl; 
+    ccFile << indent << indent << "break;" << std::endl;
+  }
+  ccFile << indent << "case lexer::TokenType::END_OF_FILE:" << std::endl;
+  ccFile << indent << indent << "os << \"END_OF_FILE\";" << std::endl; 
+  ccFile << indent << indent << "break;" << std::endl;
+  ccFile << indent << "case lexer::TokenType::INVALID:" << std::endl;
+  ccFile << indent << "default:" << std::endl;
+  ccFile << indent << indent << "os << \"INVALID\";" << std::endl;
+  ccFile << indent << "}" << std::endl << std::endl;
+  ccFile << indent << "return os;" << std::endl;
+  ccFile << "}" << std::endl << std::endl;
+
   ccFile << "Token Tokenizer::getNextToken() {" << std::endl << std::endl;
   
   ccFile << std::endl;
