@@ -104,6 +104,7 @@ struct hash<lexer::symbol>: public std::unary_function<lexer::symbol, size_t> {
     return hash_fn(s.val) + s.lambda*13;
   }
 };
+
 } //namespace std
 
 namespace lexer {
@@ -161,5 +162,21 @@ __symbol_writer<iter_type> symbol_writer(iter_type begin, iter_type end) {
 
 } //namespace lexer
 
+namespace std {
+template<>
+struct hash<pair<lexer::state, lexer::symbol> > {
+  hash<lexer::state> state_hash;
+  hash<lexer::symbol> symbol_hash;
+
+  size_t operator()(const std::pair<lexer::state, lexer::symbol> &p) const {
+
+    size_t a = state_hash(p.first);
+    size_t b = symbol_hash(p.second);
+    return a ^ b;
+  }
+
+};
+
+}
 
 #endif // LEXER_COMMON_HH_GUARD
