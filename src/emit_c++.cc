@@ -40,6 +40,9 @@ void lexer::cpp_emitter::emit_dfa(std::vector<tkn_rule> &tkn_rules,
   DFA d = f.determinize();
   d.minimize();
 
+  std::ofstream ff("monkey.dot");
+  ff << d.toDot();
+
   std::stringstream oscc;
   std::stringstream oshh;
   hhFile << "#ifndef TOKENIZER_HH_GUARD" << std::endl;

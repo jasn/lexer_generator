@@ -21,6 +21,7 @@ class Parser {
 public:
   Parser(std::string line, size_t linenumber, size_t add);
   std::shared_ptr<RegularExpression> parseOr();
+  std::shared_ptr<RegularExpression> parseOpt();
   std::shared_ptr<RegularExpression> parseConcat();
   std::shared_ptr<RegularExpression> parseStarPlus();
   std::shared_ptr<RegularExpression> parseInner();
