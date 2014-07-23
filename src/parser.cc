@@ -30,13 +30,25 @@ std::shared_ptr<RegularExpression> Parser::parseOr() {
 }
 
 std::shared_ptr<RegularExpression> Parser::parseConcat() {
-  std::shared_ptr<RegularExpression> left = parseStarPlus();
+  std::shared_ptr<RegularExpression> left = parseOpt();
   if (pos != end && *pos != '|' && *pos != ')') {
     std::shared_ptr<RegularExpression> right = parseConcat();
     return std::make_shared<RegExpConcat>(left, right);
   }
   return left;
 }
+
+
+std::shared_ptr<RegularExpression> Parser::parseOpt() {
+  std::shared_ptr<RegularExpression> left = parseStarPlus();
+  if (*pos == '?') {
+    ++pos;
+    return std::make_shared<RegExpOpt>(left);
+  }
+  return left;
+
+}
+
 
 std::shared_ptr<RegularExpression> Parser::parseStarPlus() {
   std::shared_ptr<RegularExpression> left = parseInner();

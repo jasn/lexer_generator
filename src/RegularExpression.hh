@@ -118,6 +118,26 @@ struct RegExpOr : public RegularExpression {
 
 };
 
+struct RegExpOpt : public RegularExpression {
+  std::shared_ptr<RegularExpression> left;
+  RegExpOpt(std::shared_ptr<RegularExpression> left) : left(left) {};
+
+  virtual void printType(std::ostream &os) {
+    os << "{\"type\":\"opt\"," << std::endl;
+    os << "\"left\":" << std::endl;
+    left->printType(os);
+    os << "}" << std::endl;
+  }
+  
+  // join the two automatons.
+
+  virtual lexer::NFA getNFA(acceptType at) const {
+    NFA l = left->getNFA(at);
+    return NFA::opt(l);
+  }
+
+};
+
 struct RegExpChars : public RegularExpression {
   std::unordered_set<symbol> chars;
 

@@ -29,6 +29,7 @@ namespace lexer {
     static NFA addStar(const NFA &a, acceptType at);
     static NFA addPlus(const NFA &a);
     static NFA join(const NFA &a, const NFA &b);
+    static NFA opt(const NFA &a);
     static NFA simpleAccept(std::unordered_set<symbol> accSymbols, acceptType at);
 
     const std::multimap<std::pair<state, symbol>, state>&

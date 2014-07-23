@@ -180,6 +180,17 @@ namespace lexer {
     return NFA(newSize, newAccepts, newInitial, newDelta);
   }
 
+  NFA NFA::opt(const NFA &a) {
+    std::multimap<std::pair<state, symbol>, state> newDelta(a.getDelta());
+    std::unordered_map<state, acceptType> newAccepts(a.getAcceptStates());
+    size_t newSize = a.getNumberOfStates() + 1;
+    state newInitial = newSize - 1;
+    
+    newDelta.insert({{newInitial, lexer::LAMBDA}, a.getInitialState()});
+    newAccepts.insert({newInitial, a.getAcceptStates().begin()->second});
+    return NFA(newSize, newAccepts, newInitial, newDelta);
+  }
+
   NFA NFA::join(const NFA &a, const NFA &b) {
 
     
