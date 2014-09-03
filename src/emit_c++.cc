@@ -14,8 +14,10 @@ using namespace lexer;
 
 const std::string indent = "    ";
 
-void lexer::cpp_emitter::emit_dfa(std::vector<tkn_rule> &tkn_rules,
-				  const std::string &outputDirectory) {
+void lexer::cpp_emitter::emit_dfa(
+  const DFA & d, 
+  std::vector<tkn_rule> &tkn_rules,
+  const std::string &outputDirectory) {
 
   std::string hhFilename = outputDirectory + "tokenizer.hh";
   std::string ccFilename = outputDirectory + "tokenizer.cc";
@@ -30,16 +32,10 @@ void lexer::cpp_emitter::emit_dfa(std::vector<tkn_rule> &tkn_rules,
     throw std::runtime_error("Could not open: " + ccFilename);
   }
 
-  std::vector<std::string> names(tkn_rules.size());
-  NFA f(1, std::unordered_map<state, acceptType>(), 0, {});
-  for (size_t i = 0; i < tkn_rules.size(); ++i) {
-    names[i] = tkn_rules[i].name;
-    f = lexer::NFA::join(f, tkn_rules[i].regexp->getNFA(i+1));
-  }
-
-  DFA d = f.determinize();
-  d.minimize();
-
+  std::vector<std::string> names;
+  for (auto const & r: tkn_rules)
+    names.push_back(r.name);
+  
   std::ofstream ff("monkey.dot");
   ff << d.toDot();
 
