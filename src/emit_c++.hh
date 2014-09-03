@@ -11,8 +11,8 @@
 namespace lexer {
 
   struct cpp_emitter {
-
-    static void emit_dfa(std::vector<tkn_rule> &tkn_rules,
+    static void emit_dfa(const DFA & d, 
+			 std::vector<tkn_rule> &tkn_rules,
 			 const std::string &outputDirectory);
 
   };

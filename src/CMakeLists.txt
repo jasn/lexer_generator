@@ -9,6 +9,8 @@ add_library (lexer
 	    RegularExpression.hh
 	    emit_c++.hh
 	    emit_c++.cc
+	    emit_table.hh
+	    emit_table.cc
 )
 
 add_executable(generate_lexer generate_lexer.cc)

@@ -26,5 +26,12 @@ int main(int argc, char *argv[]) {
   std::vector<tkn_rule> thingy = parseFile(small_lang);
       
   std::string outputDirectory = std::string(CMAKE_SOURCE_DIR)+"/build/";
-  cpp_emitter::emit_dfa(thingy, outputDirectory);
+
+  NFA f(1, std::unordered_map<state, acceptType>(), 0, {});
+  for (size_t i = 0; i < thingy.size(); ++i)
+    f = lexer::NFA::join(f, thingy[i].regexp->getNFA(i+1));
+  DFA d = f.determinize();
+  d.minimize();
+
+  cpp_emitter::emit_dfa(d, thingy, outputDirectory);
 }
