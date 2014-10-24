@@ -161,9 +161,9 @@ struct RegExpChars : public RegularExpression {
     os << "{\"type\":\"chars\"," << std::endl;
     os << "\"value\":\"";
     for (auto x : chars) {
-      if (x.val == '\\' || x.val == '"')
-	os << "\\";
-      os << x;
+	if (x.val == '\\')
+	    os << "\\";
+	os << x;
     }
     os << "\"}" << std::endl;
   }
