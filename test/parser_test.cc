@@ -81,6 +81,15 @@ void test_precedence() {
   parsed.regexp->printType(ss);
 }
 
+void test_precedence2() {
+
+    std::string line = "X := a(ba)*";
+
+    tkn_rule parsed(lexer::parseLine(line, 0));
+
+    parsed.regexp->printType(ss);
+}
+
 int main() {
 
   ss << "{\"test_concat\":" << std::endl;
@@ -107,22 +116,28 @@ int main() {
   ss << ", \"test_precedence\":" << std::endl;
   test_precedence();
 
+  ss << ", \"test_precedence2\":" << std::endl;
+  test_precedence2();
+
   ss << "}" << std::endl;
 
-  std::ifstream ifs(std::string(CMAKE_SOURCE_DIR)+"/test/parser_test_output");
+  std::string path = std::string(CMAKE_SOURCE_DIR)+"/test/parser_test_output";
+  std::ifstream ifs(path);
   std::stringstream ss2;
   std::string s1, s2;
 
   if (!ifs.good()) {
-    std::cout << "Error in parser test" << std::endl;
+      std::cout << "Error in parser test. Could not open " << path << std::endl;
     exit(EXIT_FAILURE);  
   }
-
+ 
   while (ifs.good() && ss.good()) {
     getline(ifs, s1);
     getline(ss, s2);
     if (s1 != s2) {
       std::cout << "Error in parser test" << std::endl;
+      std::cout << "CORRECT:  " << s1 << std::endl
+		<< "OUTPUT:   " << s2 << std::endl;
       exit(EXIT_FAILURE);
     }
   }

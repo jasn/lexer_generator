@@ -140,4 +140,21 @@
 }
 }
 }
+, "test_precedence2":
+{"type":"concat",
+"left":
+{"type":"chars",
+"value":"a"}
+,"right":
+{"type":"star",
+"inner":{"type":"concat",
+"left":
+{"type":"chars",
+"value":"b"}
+,"right":
+{"type":"chars",
+"value":"a"}
+}
+}
+}
 }
