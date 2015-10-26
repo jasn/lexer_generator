@@ -22,7 +22,7 @@ namespace lexer {
 	os << "\u03BB"; // lambda
       } else {
 	if (isprint(s.val)) {
-	  if (s.val == '"') os << '\\';
+	  if (s.val == '"' || s.val == '\\') os << '\\';
 	  os << s.val;
 	} else {
 	  //os << "\u2603"; // snowman
