@@ -333,6 +333,8 @@ a.getInitialState()*(b.getNumberOfStates()+1) + b.getInitialState(),
 
     this->numberOfStates = counter;
 
+    // remove unreachable states again?
+
   }
 
   std::string DFA::toDot() const {
@@ -350,17 +352,19 @@ a.getInitialState()*(b.getNumberOfStates()+1) + b.getInitialState(),
     for (state s = 0; s < numberOfStates; ++s) {
       auto iter = delta.lower_bound({s, symbol::min() });
       if (A.count(s)) continue;
-      while (iter->first.first == s) {
+      while (iter != delta.end() && iter->first.first == s) {
 	if (iter->second != s) break;
 	++iter;
       }
-      if (iter->first.first == s) continue;
+      if (iter != delta.end() && iter->first.first == s) continue;
       rejectState = s;
       break;
     }
 
     std::map<std::pair<state, state>, std::set<symbol> > edges;
 
+    // edges contains (from state, to state) -> (symbol) on that edge
+    // edges only contains edges that do not go to the global reject state
     for (auto edge : delta) {
       if (edge.second == rejectState) continue;
       edges[{edge.first.first, edge.second}].insert(edge.first.second);
