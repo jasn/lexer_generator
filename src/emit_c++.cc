@@ -111,10 +111,12 @@ void lexer::cpp_emitter::emit_dfa(
   size_t numberOfStates = d.getNumberOfStates();
   state q0 = d.getInitialState();
 
+  // Find the global reject state. i.e. the node where all edges are self loops
+  // and the node itself is a reject state.
   state rejectState;
   for (state s = 0; s < numberOfStates; ++s) {
-    auto iter = delta.lower_bound({s, symbol::min() });
     if (accepts.count(s)) continue;
+    auto iter = delta.lower_bound({s, symbol::min() });
     while (iter->first.first == s) {
       if (iter->second != s) break;
       ++iter;
@@ -129,7 +131,8 @@ void lexer::cpp_emitter::emit_dfa(
   std::map<state, std::map<state, std::set<symbol> > > remapped;
 
   for (state i = 0; i < numberOfStates; ++i) {
-    remapped[i];
+    if (i != rejectState)
+      remapped[i];
   }
 
   for (auto x : delta) {
@@ -143,16 +146,17 @@ void lexer::cpp_emitter::emit_dfa(
   }
 
 
-  for (auto x : remapped) {
+  for (auto x : remapped) { 	// key: state, value: map[state] -> set of symbols.
     ccFile << "s" << x.first << ":" << std::endl;
     ccFile << indent << "switch (*curr) {" << std::endl;
-    for (auto y : x.second) {
-      if (x.first == rejectState) continue;
-      for (auto z : y.second) {
-	ccFile << indent << "case " << static_cast<int>(z.val) << ":" << std::endl;
+    if (x.first != rejectState) {
+      for (auto y : x.second) {	// key: state, value: set of symbols
+	for (auto z : y.second) { // z is a symbol. Iterating over all edges that end in state y coming from x.
+	  ccFile << indent << "case " << static_cast<int>(z.val) << ":" << std::endl;
+	}
+	ccFile << indent << indent << "++curr;" << std::endl;
+	ccFile << indent << indent << "goto s" << y.first << ";" << std::endl;
       }
-      ccFile << indent << indent << "++curr;" << std::endl;
-      ccFile << indent << indent << "goto s" << y.first << ";" << std::endl;
     }
 
     if (x.first == d.getInitialState()) {
